@@ -1,0 +1,98 @@
+{% extends 'base.html' %}
+{% set title = _('Resultados de Búsqueda') %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <h1 class="text-3xl font-bold text-primary mb-8 text-center">
+        <i class="fas fa-briefcase mr-2"></i>{{ _('Trabajos Recomendados') }}
+    </h1>
+
+    {% if jobs %}
+    <div class="space-y-6">
+        {% for job in jobs %}
+        <div class="bg-white rounded-xl card-hover p-6">
+            <div class="flex items-start justify-between">
+                <!-- Información del trabajo -->
+                <div>
+                    <h2 class="text-2xl font-bold text-primary">
+                        {{ job.title if job.title else 'N/A' }}
+                    </h2>
+                    <div class="mt-3 space-y-1 text-gray-600">
+                        <p><i class="fas fa-building mr-2"></i>{{ job.company if job.company else 'N/A' }}</p>
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>{{ job.location if job.location else 'N/A' }}</p>
+                    </div>
+                </div>
+
+                <!-- Botón "Postular" con enlace -->
+                <div class="flex flex-col items-end">
+                    <a href="{{ job.url if job.url else '#' }}" target="_blank"
+                       class="primary-bg hover:bg-purple-700 text-white px-6 py-2 rounded-lg flex items-center mb-2">
+                        <i class="fas fa-external-link-alt mr-2"></i>{{ _('Ver Oferta') }}
+                    </a>
+                    
+                    <button onclick="applyJob('{{ job.title|escape }}', '{{ job.company|escape }}')"
+                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center">
+                        <i class="fas fa-check-circle mr-2"></i>{{ _('Postular') }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Coincidencias con el CV -->
+            {% if job.keywords_matched %}
+            <div class="mt-6">
+                <h3 class="text-lg font-bold text-primary mb-2">{{ _('Coincidencias con tu CV') }}</h3>
+                <div class="flex flex-wrap gap-2">
+                    {% for keyword in job.keywords_matched %}
+                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
+                        {{ keyword }}
+                    </span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center p-8 bg-purple-50 rounded-xl">
+        <i class="fas fa-file-alt text-4xl text-primary mb-4"></i>
+        <p class="text-gray-600">{{ _('No se encontraron trabajos que coincidan con tu CV.') }}</p>
+    </div>
+    {% endif %}
+
+    <div class="mt-8 text-center">
+        <a href="{{ url_for('index') }}"
+           class="accent-bg hover:bg-red-700 text-white px-6 py-3 rounded-lg flex items-center justify-center w-full max-w-xs mx-auto">
+            <i class="fas fa-arrow-left mr-2"></i>{{ _('Buscar Nuevamente') }}
+        </a>
+    </div>
+</div>
+
+<!-- Script para manejar la postulación -->
+<script>
+    function applyJob(title, company) {
+        fetch('/apply_job', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                title: title,
+                company: company
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                alert('¡Postulación exitosa!');
+            } else {
+                alert('Ya aplicaste a este trabajo.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Hubo un error al postular. Inténtalo de nuevo.');
+        });
+    }
+</script>
+{% endblock %}

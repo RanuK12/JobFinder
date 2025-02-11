@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+{% set title = _('Buscar Trabajos') %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-xl card-hover p-8">
+    <h1 class="text-3xl font-bold text-primary mb-6 text-center">
+        <i class="fas fa-upload mr-2"></i>{{ _('Sube tu CV y encuentra tu próximo trabajo') }}
+    </h1>
+
+    <!-- Mensaje de confirmación -->
+    {% if cv_uploaded %}
+    <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+        <i class="fas fa-check-circle mr-2"></i>{{ _('CV cargado exitosamente:') }} {{ uploaded_filename }}
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data" class="space-y-6">
+        <!-- Subida de CV -->
+        <div>
+            <label class="block text-gray-700 mb-2">{{ _('Sube tu CV (PDF o DOCX)') }}</label>
+            <div id="cv-upload-container" class="border-2 border-dashed border-purple-200 rounded-xl p-6 text-center cursor-pointer hover:border-purple-400 transition">
+                <input type="file" id="cv" name="cv" accept=".pdf,.docx" required class="hidden" onchange="showFileName(this)">
+                <label for="cv" class="cursor-pointer">
+                    <i class="fas fa-file-upload text-4xl text-primary mb-2"></i>
+                    <p id="cv-label" class="text-gray-600">{{ _('Arrastra tu archivo aquí o haz clic para subirlo') }}</p>
+                    <p id="cv-filename" class="text-sm text-purple-600 mt-2 hidden"></p>
+                </label>
+            </div>
+        </div>
+
+        <!-- Selección de Región -->
+        <div>
+            <label class="block text-gray-700 mb-2">{{ _('Región') }}</label>
+            <select name="continent" class="form-input w-full p-3">
+                <option value="all">{{ _('Todas las regiones') }}</option>
+                <option value="asia">{{ _('Asia') }}</option>
+                <option value="europa">{{ _('Europa') }}</option>
+                <option value="américa">{{ _('América') }}</option>
+            </select>
+        </div>
+
+        <!-- Botón de Búsqueda -->
+        <button type="submit" class="button-primary w-full">
+            <i class="fas fa-search mr-2"></i>{{ _('Buscar Trabajos') }}
+        </button>
+    </form>
+</div>
+
+<script>
+    // Mostrar nombre del archivo seleccionado
+    function showFileName(input) {
+        const fileName = input.files[0].name;
+        document.getElementById('cv-label').classList.add('hidden');
+        document.getElementById('cv-filename').textContent = fileName;
+        document.getElementById('cv-filename').classList.remove('hidden');
+    }
+</script>
+{% endblock %}

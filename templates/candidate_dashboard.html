@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+{% set title = _('Mi Perfil') %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8 card-hover">
+    <!-- Encabezado -->
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-primary mb-2">
+            <i class="fas fa-user-circle mr-2"></i>{{ _('Mi Perfil') }}
+        </h1>
+        <p class="text-gray-600">{{ _('Administra tu información y preferencias') }}</p>
+    </div>
+
+    <!-- Sección de Información Personal -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
+        <!-- Foto de Perfil -->
+        <div class="md:col-span-1 flex flex-col items-center">
+            <form id="profile-form" method="POST" action="{{ url_for('update_profile') }}" 
+                  enctype="multipart/form-data" class="text-center">
+                <label class="relative cursor-pointer group">
+                    <img id="profile-preview" 
+                         src="{{ url_for('static', filename=current_user.profile_picture or 'profiles/default-profile.jpg') }}"
+                         class="w-32 h-32 rounded-full border-4 border-purple-200 shadow-lg
+                                transform transition duration-300 hover:scale-105">
+                    <div class="absolute inset-0 bg-black bg-opacity-40 rounded-full opacity-0 
+                               group-hover:opacity-100 transition-all flex items-center justify-center">
+                        <i class="fas fa-camera text-white text-2xl"></i>
+                    </div>
+                    <input type="file" name="profile_picture" class="hidden" accept="image/*" 
+                           onchange="previewImage(event)">
+                </label>
+            </form>
+        </div>
+
+        <!-- Datos del Usuario -->
+        <div class="md:col-span-2">
+            <div class="bg-purple-50 rounded-lg p-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-sm font-semibold text-primary">{{ _('Nombre Completo') }}</label>
+                        <p class="text-lg text-gray-800">{{ current_user.full_name }}</p>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-primary">{{ _('Correo Electrónico') }}</label>
+                        <p class="text-lg text-gray-800 break-all">
+                            <i class="fas fa-envelope mr-2 text-purple-600"></i>{{ current_user.email }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección de Habilidades -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold text-primary mb-6">
+            <i class="fas fa-tools mr-2"></i>{{ _('Mis Habilidades') }}
+        </h2>
+        
+        <!-- Etiquetas de Habilidades -->
+        <div id="skills-container" class="flex flex-wrap gap-2 mb-4">
+            {% for skill in (current_user.skills or '').split(',') if skill.strip() %}
+                <div class="skill-tag bg-purple-600 text-white px-4 py-2 rounded-full 
+                            flex items-center hover:bg-purple-700 transition-colors">
+                    <span>{{ skill.strip() }}</span>
+                    <button type="button" class="ml-2" onclick="removeSkill(this)">
+                        <i class="fas fa-times text-sm"></i>
+                    </button>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- Input de Habilidades -->
+        <form method="POST" action="{{ url_for('update_profile') }}">
+            <div class="relative">
+                <input type="text" name="skills" 
+                    class="form-input w-full p-4 pr-12 rounded-lg border-2 border-purple-200
+                           focus:border-purple-400 focus:ring-2 focus:ring-purple-100"
+                    placeholder="{{ _('Ej: Python, Diseño UX, Marketing Digital... (Separa con comas)') }}"
+                    value="{{ current_user.skills or '' }}">
+                <button type="submit" 
+                        class="absolute right-3 top-3 primary-bg text-white p-2 rounded-lg 
+                               hover:bg-purple-700 transition-colors">
+                    <i class="fas fa-save"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Acciones Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="{{ url_for('index') }}" 
+           class="accent-bg text-white p-4 rounded-lg flex items-center justify-center
+                  hover:bg-red-700 transition-colors">
+            <i class="fas fa-search mr-2"></i>{{ _('Buscar Trabajos') }}
+        </a>
+        <a href="{{ url_for('logout') }}" 
+           class="bg-gray-600 text-white p-4 rounded-lg flex items-center justify-center
+                  hover:bg-gray-700 transition-colors">
+            <i class="fas fa-sign-out-alt mr-2"></i>{{ _('Cerrar Sesión') }}
+        </a>
+    </div>
+</div>
+
+<script>
+    // Preview de imagen
+    function previewImage(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            document.getElementById('profile-preview').src = reader.result;
+            document.getElementById('profile-form').submit();
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    // Eliminar habilidad
+    function removeSkill(button) {
+        const skillTag = button.closest('.skill-tag');
+        skillTag.remove();
+        updateSkillsInput();
+    }
+
+    // Actualizar campo oculto
+    function updateSkillsInput() {
+        const skills = Array.from(document.querySelectorAll('.skill-tag span'))
+                          .map(skill => skill.textContent.trim());
+        document.querySelector('input[name="skills"]').value = skills.join(', ');
+    }
+</script>
+
+<style>
+    .skill-tag {
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .skill-tag:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+</style>
+{% endblock %}
