@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% set title = _('Ofertas Laborales') %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto py-8 px-4">
+    <h1 class="text-3xl font-bold text-primary mb-8 text-center">
+        <i class="fas fa-list-alt mr-2"></i>{{ _('Ofertas Laborales') }}
+    </h1>
+
+    <!-- Filtros -->
+    <div class="bg-white rounded-xl card-hover p-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <input type="text" placeholder="{{ _('Buscar por palabra clave') }}" class="form-input p-3">
+            <select class="form-input p-3">
+                <option>{{ _('Todas las ubicaciones') }}</option>
+                <option>{{ _('Remoto') }}</option>
+                <option>{{ _('Presencial') }}</option>
+            </select>
+            <button class="primary-bg hover:bg-purple-700 text-white p-3 rounded-lg">
+                {{ _('Filtrar') }}
+            </button>
+        </div>
+    </div>
+
+    <!-- Listado de Trabajos -->
+    <div class="space-y-6">
+        {% for job in jobs %}
+        <div class="bg-white rounded-xl card-hover p-6">
+            <div class="flex items-start justify-between">
+                <div>
+                    <h2 class="text-2xl font-bold text-primary">{{ job.title }}</h2>
+                    <p class="text-gray-600 mt-2">
+                        <i class="fas fa-building mr-2"></i>{{ job.employer.full_name }}
+                    </p>
+                    <p class="text-gray-600">
+                        <i class="fas fa-map-marker-alt mr-2"></i>{{ job.location }}
+                    </p>
+                </div>
+                <a href="{{ url_for('apply_job', job_id=job.id) }}" class="primary-bg hover:bg-purple-700 text-white px-6 py-2 rounded-lg flex items-center">
+                    <i class="fas fa-check-circle mr-2"></i>{{ _('Postularme') }}
+                </a>
+            </div>
+            <div class="mt-6 text-gray-700">
+                {{ job.description|safe }}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

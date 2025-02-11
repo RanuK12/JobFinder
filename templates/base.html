@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="{{ current_language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }}</title>
+    <!-- Alpine.js -->
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        [x-cloak] { display: none; }  
+        :root {
+            --primary-color: #6A5ACD; /* Lila suave */
+            --secondary-color: #4B0082; /* Lila oscuro */
+            --accent-color: #FF6B6B; /* Rojo coral */
+            --background-color: #f9fafb;
+            --text-color: #2d3748;
+        }
+        
+        .text-primary {
+            color: var(--primary-color);
+        }
+        
+        .bg-primary {
+            background-color: var(--primary-color);
+        }
+        
+        .bg-purple-50 {
+            background-color: rgba(106, 90, 205, 0.1); /* Fondo lila claro */
+        }
+        
+        .card-hover {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(106, 90, 205, 0.1);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(106, 90, 205, 0.15);
+        }
+        .navbar {
+        position: fixed;
+        top: 0;
+        width: 100%;
+        z-index: 1000;
+        box-shadow: 0 2px 10px rgba(106, 90, 205, 0.1);
+        }
+
+        .hero {
+        padding-top: 8rem; /* Ajuste para el navbar fijo */
+        }
+
+        .primary-bg {
+        background-color: var(--primary-color);
+        color: white;
+        transition: background-color 0.3s ease;
+        }
+
+        .primary-bg:hover {
+        background-color: var(--secondary-color);
+        }
+
+        .bg-purple-50 {
+        background-color: rgba(106, 90, 205, 0.1);
+        }
+        .accent-bg {
+            background-color: var(--accent-color) !important; /* Rojo coral */
+            color: white !important;
+        }
+        
+        .accent-bg:hover {
+            background-color: #e64a4a !important; /* Tono más oscuro */
+        }
+    </style>
+</head>
+<body class="min-h-screen pt-16">
+    {% include 'navbar.html' %}
+
+    <div class="container mx-auto py-12 px-4 max-w-4xl">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="p-4 mb-4 rounded-md bg-purple-50 border border-purple-200 text-purple-700">
+                        <i class="fas fa-info-circle mr-2"></i>{{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+</body>
+</html>
