@@ -8,3 +8,4 @@ webdriver-manager==4.0.1
 spacy==3.7.2
 python-docx==0.8.11
 pdfminer.six==20221105
+gunicorn==21.2.0 
