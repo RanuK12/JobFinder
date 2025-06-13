@@ -66,7 +66,7 @@ Job_finder_app/
 ## 📩 Contact
 📧 Questions or suggestions? Contact me!
 - 📌 **Email**: ranucoliemilio@gmail.com
-- 📌 **LinkedIn**: [Your Profile]([https://www.linkedin.com](https://www.linkedin.com/in/emilio-ranucoli/))
+- 📌 **LinkedIn**: ([https://www.linkedin.com](https://www.linkedin.com/in/emilio-ranucoli/))
 
 ## 📄 License
 This project is licensed under the MIT License - see the LICENSE file for details.
