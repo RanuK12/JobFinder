@@ -1,115 +1,77 @@
-# Job Finder Application
+# 🏆 JobConnect - Encuentra Tu Próximo Trabajo
 
-A Flask-based web application that helps users find job opportunities by analyzing their CV and matching it with job listings from various remote job platforms.
+## 📌 Descripción
+JobConnect es una plataforma web que conecta candidatos con ofertas laborales en diferentes sectores y regiones. Basándose en tu CV, la aplicación encuentra las mejores oportunidades disponibles en diversas plataformas de empleo.
 
-## Features
+## 🚀 Características Principales
+- ✔️ **Carga de CV Inteligente**: Analiza tu CV en formato PDF o DOCX y extrae palabras clave.
+- ✔️ **Scraping de Ofertas**: Busca empleos en múltiples plataformas (WeWorkRemotely, RemoteOK) y los clasifica según la relevancia.
+- ✔️ **Postulación Rápida**: Guarda las postulaciones realizadas para hacer seguimiento.
+- ✔️ **Interfaz Amigable**: Diseño moderno, optimizado para escritorio y móvil.
+- ✔️ **Soporte Multi-idioma**: Disponible en Español, Inglés e Italiano.
+- ✔️ **AI-powered job matching**: Sistema de emparejamiento inteligente basado en IA.
+- ✔️ **Rate limiting y caching**: Optimización de rendimiento y protección contra sobrecarga.
 
-- CV parsing and analysis
-- Job scraping from multiple platforms (WeWorkRemotely, RemoteOK)
-- AI-powered job matching
-- Multi-language support (English, Spanish, Italian)
-- Rate limiting and caching
-- Secure file handling
-- Responsive web interface
+## 🛠️ Tecnologías Utilizadas
+- 🔹 **Backend**: Flask, SQLAlchemy, Flask-Login, Flask-Babel
+- 🔹 **Frontend**: Jinja2, HTML, Tailwind CSS
+- 🔹 **Scraping**: BeautifulSoup, Selenium, Requests
+- 🔹 **Base de Datos**: SQLite
+- 🔹 **IA**: Modelos de procesamiento de lenguaje natural
 
-## Prerequisites
+## ⚡ Instalación Local
+1. Clonar el repositorio
+    ```bash
+    git clone https://github.com/RanuK12/JobFinder.git
+    cd Job_finder_app
+    ```
+2. Crear un entorno virtual e instalar dependencias
+    ```bash
+    python -m venv venv
+    source venv/bin/activate  # En Windows usa: venv\Scripts\activate
+    pip install -r requirements.txt
+    ```
+3. Configurar variables de entorno
+    ```bash
+    cp .env.example .env
+    # Editar .env con tu configuración
+    ```
+4. Ejecutar la aplicación
+    ```bash
+    python app.py
+    ```
+   📌 La app se ejecutará en [http://127.0.0.1:5000/](http://127.0.0.1:5000/)
 
-- Python 3.8 or higher
-- Chrome browser (for Selenium)
-- Virtual environment (recommended)
-
-## Installation
-
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd Job_finder_app
-```
-
-2. Create and activate a virtual environment:
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up environment variables:
-```bash
-cp .env.example .env
-# Edit .env with your configuration
-```
-
-## Configuration
-
-The application can be configured through environment variables or the config.py file. Key settings include:
-
-- `SECRET_KEY`: Flask secret key
-- `UPLOAD_FOLDER`: Directory for temporary file uploads
-- `BABEL_DEFAULT_LOCALE`: Default language
-- `CACHE_TYPE`: Cache backend type
-- `RATELIMIT_DEFAULT`: Rate limiting rules
-
-## Usage
-
-1. Start the development server:
-```bash
-python app.py
-```
-
-2. Open your browser and navigate to `http://localhost:5000`
-
-3. Upload your CV (PDF or DOCX format)
-
-4. View matched job opportunities
-
-## Development
-
-### Running Tests
-```bash
-pytest
-```
-
-### Code Style
-```bash
-black .
-flake8
-mypy .
-```
-
-## Project Structure
-
+## 📁 Estructura del Proyecto
 ```
 Job_finder_app/
-├── app.py              # Main application file
-├── config.py           # Configuration settings
-├── scraper.py          # Job scraping module
-├── cv_parser.py        # CV parsing module
-├── ai_matcher.py       # Job matching module
-├── requirements.txt    # Project dependencies
-├── static/            # Static files
-├── templates/         # HTML templates
-└── translations/      # Language translations
+├── app.py              # Archivo principal de la aplicación
+├── config.py           # Configuración
+├── scraper.py          # Módulo de scraping
+├── cv_parser.py        # Módulo de análisis de CV
+├── ai_matcher.py       # Módulo de emparejamiento
+├── requirements.txt    # Dependencias
+├── static/            # Archivos estáticos
+├── templates/         # Plantillas HTML
+└── translations/      # Traducciones
 ```
 
-## Contributing
+## 💡 Contribuciones
+- 🔹 Fork el repositorio
+- 🔹 Crea una nueva rama (`git checkout -b feature-nueva`)
+- 🔹 Haz cambios y commitea (`git commit -m "Nueva función"`)
+- 🔹 Sube los cambios (`git push origin feature-nueva`)
+- 🔹 Abre un Pull Request
 
-1. Fork the repository
-2. Create a feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a Pull Request
+## 📩 Contacto
+📧 ¿Tienes dudas o sugerencias? ¡Contáctame!
+- 📌 **Email**: emilioranucoliturletto@gmail.com
+- 📌 **LinkedIn**: [Tu Perfil](https://www.linkedin.com)
 
-## License
+## 📄 Licencia
+Este proyecto está licenciado bajo la Licencia MIT - ver el archivo LICENSE para más detalles.
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+🎯 **JobConnect - Tu próximo trabajo está a un clic de distancia.** 🚀
 
-## Acknowledgments
-
-- Flask framework
-- BeautifulSoup4 for web scraping
-- Selenium for dynamic content
-- All job platforms for providing opportunities
+🔹 **¿Te gustó el proyecto? Dale ⭐ en GitHub!**
+👉 [Repositorio en GitHub](https://github.com/RanuK12/JobFinder)
