@@ -1,0 +1,846 @@
+Clave secreta: fb76b944b5b3901ca7ea75e30790dd5c317a901fbf14b73e5964dc0ae656a0d3
+Quiero que le incluyamos las modificaciones: 
+quiero conectarlo con una base de datos, integrarle un login, hacer una barra superior ordenada donde este sector empresa, buscar trabajos, que la foto aparezca arriba a la derecha y lo lleve al perfil del candidato. Que el candidato pueda cargar su CV y que la IA le evalue el Cv y le enumere y cargue todas las habilidades automaticamente para mejorar el scraping y que el scraping esté mejorado, porque actualmente me busca casi todos los trabajos en weremotely, no busca en el resto de las plataformas ni hace scraping. 
+Tampoco que no sea solo dedicada la app a programadores o a desarrolladores python, que sea para todo publico, desde educadores, medicos, logistica, de todos los trabajos que quieran buscar, quiero que la app sea para todo el mundo. 
+También quiero mejorar la parte de las empresas, que esté conectado con la base de datos de candidatos y que la empresa cree un perfil (que pueda publicar puestos laborales dentro de la app(integrar otro atajo a la app donde estén todas las postulaciones de trabajos con filtros para buscarlos, que te aparezca si haces match, etc) y que la empresa puede hacerse un perfil como empresa, actualmente está desintegrada por completa esa parte, no es muy comoda la app actualmente, quiero que la mejoremos 10 veces más, que quede para uso profesional.
+También que los login y las creaciones de cuentas se hagan bien. 
+
+
+te doy todos los codigos necesarios a modificar con las modificaciones que te indique:
+scraper.py:
+import requests
+from bs4 import BeautifulSoup
+import re
+import requests_cache
+from urllib.parse import quote_plus, urljoin
+import time
+from random import choice
+
+requests_cache.install_cache('scraper_cache', expire_after=3600)
+
+# Define user-agents to rotate
+USER_AGENTS = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Firefox/119.0.0.0"
+]
+
+# Function to get a random user-agent
+def get_random_user_agent():
+    return {'User-Agent': choice(USER_AGENTS)}
+
+PLATFORM_CONFIG = {
+    'weworkremotely': {
+        'url': 'https://weworkremotely.com/remote-jobs/search?term=',
+        'selectors': {
+            'item': 'li.feature',
+            'title': 'span.title',
+            'company': 'span.company',
+            'location': 'span.region',
+            'url': 'a'
+        }
+    },
+    'european_commission': {
+        'url': 'https://ec.europa.eu/eures/portal/jv-se/search?keywords=',
+        'selectors': {
+            'item': 'div.result-item',
+            'title': 'h2.title a',
+            'company': 'div.employer',
+            'location': 'div.location',
+            'url': 'h2.title a'
+        }
+    },
+    'getonboard': {
+        'url': 'https://www.getonboard.cl/empleos?q=',
+        'selectors': {
+            'item': 'div.job-card',
+            'title': 'h3 a',
+            'company': 'div.company-name',
+            'location': 'span.location',
+            'url': 'a',
+            'base_url': 'https://www.getonboard.cl'
+        }
+    },
+    'indeed': {
+        'url': 'https://www.indeed.com/jobs?q=',
+        'selectors': {
+            'item': 'div.job_seen_beacon',
+            'title': 'h2.jobTitle a',
+            'company': 'span.companyName',
+            'location': 'div.companyLocation',
+            'url': 'h2.jobTitle a'
+        }
+    }
+}
+
+def get_jobs(continent, cv_text="", lang='es'):
+    keywords = extract_keywords(cv_text, lang)
+    jobs = []
+
+    for platform, config in PLATFORM_CONFIG.items():
+        try:
+            # Añade un delay antes de cada solicitud
+            time.sleep(2)
+
+            platform_jobs = scrape_platform(platform, config, keywords, lang)
+            jobs.extend(platform_jobs)
+        except requests.exceptions.RequestException as e:
+            print(f"Error de red en {platform}: {e}")
+        except Exception as e:
+            print(f"Error en {platform}: {e}")
+
+    # Obtener trabajos de la API de GitHub Jobs
+    try:
+        github_jobs = get_github_jobs(keywords, lang)
+        jobs.extend(github_jobs)
+    except Exception as e:
+        print(f"Error en la API de GitHub Jobs: {e}")
+
+    return sorted(jobs, key=lambda x: len(x.get('keywords_matched',)), reverse=True)[:50]
+
+def get_github_jobs(keywords, lang='es'):
+    url = f"https://jobs.github.com/positions.json?description={quote_plus(' '.join(keywords))}"
+    response = requests.get(url)
+    response.raise_for_status()
+    jobs = response.json()
+    # Adaptar los resultados al formato esperado
+    return [{
+        'title': job['title'],
+        'company': job['company'],
+        'location': job['location'],
+        'url': job['url'],
+        'platform': 'github_jobs',
+        'keywords_matched': keywords  # Aquí puedes implementar una lógica para determinar las keywords coincidentes
+    } for job in jobs]
+
+def scrape_platform(platform_name, config, keywords, lang):
+    search_url = f"{config['url']}{quote_plus(' '.join(keywords))}"
+
+    try:
+        # Use a random user-agent for the request
+        headers = get_random_user_agent()
+        response = requests.get(search_url, headers=headers, timeout=15)
+        response.raise_for_status()
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching {platform_name}: {str(e)}")
+        return
+
+    soup = BeautifulSoup(response.text, 'html.parser')
+    jobs = []
+
+    for item in soup.select(config['selectors']['item']):
+        try:
+            # Obtiene la URL relativa del enlace
+            relative_url = item.select_one(config['selectors']['url'])['href']
+
+            # Construye la URL absoluta usando urljoin
+            base_url = config.get('base_url', search_url)  # Usa la URL base de la plataforma si está disponible
+            absolute_url = urljoin(base_url, relative_url)
+
+            job = {
+                'title': get_text(item, config['selectors']['title']),
+                'company': get_text(item, config['selectors']['company']),
+                'location': get_text(item, config['selectors']['location']),
+                'url': absolute_url,  # Guarda la URL absoluta
+                'platform': platform_name,
+                'keywords_matched': [kw for kw in keywords if kw in item.text.lower()]
+            }
+            jobs.append(job)
+        except Exception as e:
+            print(f"Error parsing item: {str(e)}")
+
+    return jobs
+
+def get_text(soup, selector):
+    element = soup.select_one(selector)
+    return element.get_text(strip=True) if element else 'No especificado'
+
+def extract_keywords(text, lang):
+    keyword_dict = {
+        'en': ['python', 'java', 'developer', 'engineer', 'remote'],
+        'es': ['python', 'java', 'desarrollador', 'ingeniero', 'remoto'],
+        'it': ['python', 'java', 'sviluppatore', 'ingegnere', 'remoto']
+    }
+    words = re.findall(r'\b[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]{4,}\b', text.lower())
+    return [word for word in words if word in keyword_dict.get(lang,)]
+
+main.py:
+from flask import Flask, request, session, redirect, url_for, render_template
+from flask_babel import Babel, gettext as _
+import os
+from scraper import get_jobs
+from cv_parser import parse_cv
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+app.config['UPLOAD_FOLDER'] = 'uploads'
+app.config['BABEL_DEFAULT_LOCALE'] = 'es'
+
+# Configuración de Babel
+babel = Babel(app)
+LANGUAGES = ['en', 'es', 'it']
+
+@babel.localeselector
+def get_locale():
+    lang = request.args.get('lang')
+    if lang in LANGUAGES:
+        session['language'] = lang
+        return lang
+    if 'language' in session:
+        return session['language']
+    return request.accept_languages.best_match(LANGUAGES)
+
+@app.context_processor
+def inject_template_vars():
+    # Obtener la foto de perfil del usuario (si está disponible)
+    profile_picture = session.get('profile_picture', url_for('static', filename='default-profile.jpg'))
+    return dict(get_locale=get_locale, profile_picture=profile_picture)
+
+# ------------------- Rutas principales -------------------
+@app.route('/')
+def root():
+    return redirect(url_for('home'))
+
+@app.route('/home')
+def home():
+    return render_template('home.html')
+
+@app.route('/search', methods=['GET', 'POST'])
+def search_jobs():
+    if request.method == 'POST':
+        file = request.files['cv']
+        continent = request.form.get('continent', 'all')
+        if file and allowed_file(file.filename):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+            cv_text = parse_cv(filepath)
+            jobs = get_jobs(continent, cv_text, get_locale())
+            return render_template('results.html', jobs=jobs or [])
+    return render_template('index.html')
+
+# ------------------- Dashboards -------------------
+@app.route('/candidate-dashboard')
+def candidate_dashboard():
+    skills = session.get('skills',)  # Obtener las habilidades del usuario (si están disponibles)
+    return render_template('candidate_dashboard.html', skills=skills)
+
+@app.route('/employer-dashboard')
+def employer_dashboard():
+    return render_template('employer_dashboard.html')
+
+# ------------------- Funcionalidades adicionales -------------------
+@app.route('/update-profile', methods=['POST'])
+def update_profile():
+    skills = request.form.get('skills', '').split(',')  # Convertir la cadena de habilidades a una lista
+    # Guardar habilidades en la sesión (o base de datos)
+    session['skills'] = skills
+    # Guardar la foto de perfil en la sesión (debes implementar la lógica para guardar la imagen en el servidor)
+    profile_picture = request.form.get('profile_picture', None)
+    if profile_picture:
+        session['profile_picture'] = profile_picture
+    return redirect(url_for('candidate_dashboard'))
+
+@app.route('/post-job', methods=['POST'])
+def post_job():
+    title = request.form.get('title')
+    description = request.form.get('description')
+    location = request.form.get('location')
+    # Aquí puedes guardar la oferta en una base de datos
+    print(f"Oferta publicada: {title} - {location}")  # Debug
+    return redirect(url_for('employer_dashboard'))
+
+# ------------------- Funciones auxiliares -------------------
+def allowed_file(filename):
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1).lower()
+    return ext in ['pdf', 'docx']
+
+if __name__ == '__main__':
+    os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+    app.run(debug=True)
+
+cv_parser.py:
+from pdfminer.high_level import extract_text
+from docx import Document
+
+def parse_cv(filepath):
+    try:
+        if filepath.endswith('.pdf'):
+            text = extract_text(filepath)
+        elif filepath.endswith('.docx'):
+            doc = Document(filepath)
+            text = "\n".join([para.text for para in doc.paragraphs])
+        else:
+            raise ValueError("Formato no soportado")
+        return text
+    except Exception as e:
+        print(f"Error parsing CV: {str(e)}")
+        return ""
+
+app.py:
+from flask import Flask, request, session, redirect, url_for, render_template
+from flask_babel import Babel, gettext as _
+from flask_login import LoginManager, UserMixin, login_user, login_required
+import os
+from scraper import get_jobs
+from cv_parser import parse_cv
+from ai_matcher import match_jobs
+
+app = Flask(__name__)
+app.secret_key = os.urandom(24)
+
+# Configuración de Babel
+babel = Babel(app)
+app.config['BABEL_DEFAULT_LOCALE'] = 'es'
+LANGUAGES = ['en', 'es', 'it']
+
+@babel.localeselector
+def get_locale():
+    # 1. Verificar parámetro en la URL
+    lang = request.args.get('lang')
+    if lang in LANGUAGES:
+        session['language'] = lang
+        return lang
+    
+    # 2. Verificar sesión
+    if 'language' in session:
+        return session['language']
+    
+    # 3. Usar el del navegador
+    return request.accept_languages.best_match(LANGUAGES)
+
+@app.route('/set_lang/<lang>')
+def set_lang(lang):
+    if lang in LANGUAGES:
+        session['language'] = lang
+    return redirect_back()
+
+def redirect_back():
+    return redirect(request.referrer or url_for('index'))
+
+@app.route('/', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        file = request.files['cv']
+        continent = request.form.get('continent', 'all')
+        
+        if file and allowed_file(file.filename):
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
+            file.save(filepath)
+            cv_text = parse_cv(filepath)
+            jobs = get_jobs(continent, cv_text, get_locale())
+            return render_template('results.html', jobs=jobs)
+    
+    return render_template('index.html')
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ['pdf', 'docx']
+
+if __name__ == '__main__':
+    os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
+    app.run(debug=True)
+
+ai_matcher.py:
+from nltk.corpus import stopwords
+from nltk.tokenize import word_tokenize
+import re
+
+def match_jobs(cv_text, jobs):
+    cv_keywords = extract_keywords(cv_text)
+    lang = detect_language(cv_text)
+    matched_jobs = []
+    
+    for job in jobs:
+        # Combine job title, company, and description for matching
+        job_text = f"{job['title']} {job.get('company', '')} {job.get('description', '')}".lower()
+        job_keywords = extract_keywords(job_text)
+        
+        # Find common keywords
+        common = set(cv_keywords).intersection(job_keywords)
+        
+        # Calculate match score based on:
+        # 1. Number of common keywords (weight: 0.4)
+        # 2. Keyword position in title (weight: 0.3)
+        # 3. Keyword frequency in description (weight: 0.3)
+        score = 0.0
+        
+        # 1. Common keywords score
+        if common:
+            score += 0.4 * (len(common) / max(len(cv_keywords), len(job_keywords)))
+            
+        # 2. Title match score
+        title_words = job['title'].lower().split()
+        title_matches = sum(1 for word in title_words if word in cv_keywords)
+        if title_words:
+            score += 0.3 * (title_matches / len(title_words))
+            
+        # 3. Description match score
+        if 'description' in job:
+            desc_words = job['description'].lower().split()
+            desc_matches = sum(1 for word in desc_words if word in cv_keywords)
+            if desc_words:
+                score += 0.3 * (desc_matches / len(desc_words))
+        
+        # Add job if score is above threshold
+        if score >= 0.2:  # Lower threshold to be more inclusive
+            matched_jobs.append({
+                **job,
+                'score': score,
+                'reasons': [
+                    f"{'Habilidades coincidentes' if lang == 'es' else 'Matching skills'}: {', '.join(common)}",
+                    f"{'Coincidencia en título' if lang == 'es' else 'Title match'}: {title_matches} keywords",
+                    f"{'Coincidencia en descripción' if lang == 'es' else 'Description match'}: {desc_matches if 'description' in job else 0} keywords"
+                ]
+            })
+    
+    # Sort by match score
+    return sorted(matched_jobs, key=lambda x: x['score'], reverse=True)[:10]
+
+def extract_keywords(text):
+    # Keywords by category
+    keywords = {
+        'programming': ['python', 'java', 'javascript', 'react', 'node', 'programación', 'desarrollo'],
+        'engineering': ['engineer', 'mechanical', 'civil', 'ingeniería', 'mecánica'],
+        'healthcare': ['doctor', 'nurse', 'medical', 'médico', 'enfermería'],
+        'logistics': ['logistics', 'supply chain', 'warehouse', 'logística', 'almacén'],
+        'hospitality': ['hotel', 'restaurant', 'customer service', 'hotelería', 'restaurante'],
+        'chef': ['chef', 'cooking', 'kitchen', 'cocina', 'gastronomía'],
+        'remote': ['remote', 'teletrabajo', 'work from home'],
+        'junior': ['junior', 'entry level', 'sin experiencia', 'primer empleo'],
+        'senior': ['senior', 'sénior', 'experto', 'experiencia'],
+        'management': ['manager', 'lead', 'gerente', 'líder'],
+        'design': ['design', 'designer', 'diseño', 'diseñador'],
+        'marketing': ['marketing', 'social media', 'digital', 'redes sociales'],
+        'sales': ['sales', 'ventas', 'comercial'],
+        'finance': ['finance', 'accounting', 'finanzas', 'contabilidad'],
+        'education': ['teacher', 'professor', 'educación', 'profesor']
+    }
+    
+    # Extract words from text
+    words = re.findall(r'\b[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]+\b', text.lower())
+    
+    # Find matching keywords
+    found_keywords = []
+    for category, category_keywords in keywords.items():
+        for keyword in category_keywords:
+            if keyword in words:
+                found_keywords.append(keyword)
+                
+    # If no keywords found, use most common words
+    if not found_keywords:
+        stop_words = set([
+            'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
+            'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+            'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her', 'she',
+            'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there', 'their', 'what'
+        ])
+        
+        word_freq = {}
+        for word in words:
+            if word not in stop_words and len(word) > 2:
+                word_freq[word] = word_freq.get(word, 0) + 1
+                
+        found_keywords = [word for word, _ in sorted(word_freq.items(), key=lambda x: x[1], reverse=True)[:5]]
+        
+    return list(set(found_keywords))[:10]  # Return up to 10 unique keywords
+
+def detect_language(text):
+    return 'es' if re.search(r'\b(y|de|el|la)\b', text.lower()) else 'en'
+
+
+
+
+
+templates:
+base.html:
+<!DOCTYPE html>
+<html lang="{{ get_locale().language }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        /* Barra de navegación */
+        nav {
+            background-color: #f0f0f0;
+            padding: 10px;
+        }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            text-align: right;
+        }
+        nav ul li {
+            display: inline;
+            margin-left: 20px;
+        }
+        nav a {
+            text-decoration: none;
+            color: #333;
+        }
+
+        /* Foto de perfil */
+      .profile-picture {
+            float: right;
+        }
+      .profile-picture img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        /* Otros estilos */
+        /*... */
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <nav>
+        <ul>
+            <li><a href="{{ url_for('candidate_dashboard') }}">Mi perfil</a></li>
+            <li><a href="{{ url_for('search_jobs') }}">Buscar trabajos</a></li>
+            <li class="profile-picture">
+                <img src="{{ profile_picture }}" alt="Foto de perfil">
+            </li>
+        </ul>
+    </nav>
+
+    {% block content %}{% endblock %}
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+
+candidate_dashboard.html:
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Dashboard Candidato - JobConnect') }}{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>{{ _('Mi Perfil Profesional') }}</h1>
+    </header>
+    <div class="profile-section">
+        <div>
+            <img id="profile-photo" src="{{ profile_picture }}" class="profile-photo">
+            <input type="file" id="image-upload" accept="image/*">
+        </div>
+        <div class="skills-section">
+            <h3>{{ _('Habilidades Detectadas') }}</h3>
+            <div id="skills-list">
+                {% if skills %}
+                    <ul>
+                        {% for skill in skills %}
+                            <li>{{ skill }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>{{ _('No se han detectado habilidades') }}</p>
+                {% endif %}
+            </div>
+            <button onclick="editSkills()">{{ _('Editar Habilidades') }}</button>
+        </div>
+        <form id="profile-form" method="POST" action="{{ url_for('update_profile') }}" style="margin-top: 1rem;">
+            <input type="hidden" name="skills" id="skills-input">
+            <button type="submit">{{ _('Guardar Perfil') }}</button>
+        </form>
+        <button onclick="window.location.href='{{ url_for('search_jobs') }}'">
+            {{ _('Buscar Trabajos') }}
+        </button>
+    </div>
+
+    <script>
+        const imageUpload = document.getElementById('image-upload');
+        const profilePhoto = document.getElementById('profile-photo');
+        const skillsList = document.getElementById('skills-list');
+        const skillsInput = document.getElementById('skills-input');
+        const profileForm = document.getElementById('profile-form');
+
+        imageUpload.addEventListener('change', (event) => {
+            const file = event.target.files;
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                profilePhoto.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        });
+
+        function editSkills() {
+            // Reemplaza esto con la lógica para editar las habilidades
+            const newSkills = prompt("Introduce tus habilidades separadas por comas:");
+            if (newSkills) {
+                const skillsArray = newSkills.split(',').map(skill => skill.trim());
+                skillsList.innerHTML = skillsArray.map(skill => <li>${skill}</li>).join('');
+                skillsInput.value = newSkills; // Guarda las habilidades en el input hidden
+            }
+        }
+
+        profileForm.addEventListener('submit', (event) => {
+            // Previene el comportamiento por defecto del formulario
+            event.preventDefault();
+
+            // Obtiene las habilidades del input hidden
+            const skills = skillsInput.value;
+
+            // Envía las habilidades al servidor usando AJAX o fetch
+            //...
+
+            // Redirige al usuario a la página de búsqueda de trabajos
+            window.location.href = '{{ url_for('search_jobs') }}';
+        });
+    </script>
+{% endblock %}
+
+employer_dashboard:
+{% extends 'base.html' %}
+
+{% block title %}{{ _('Dashboard Empresa - JobConnect') }}{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>{{ _('Dashboard Empresa') }}</h1>
+    </header>
+    <div class="container">
+        <h2>{{ _('Publicar Oferta de Trabajo') }}</h2>
+        <form method="POST" action="{{ url_for('post_job') }}">
+            <div class="form-group">
+                <label for="title">{{ _('Título del Puesto') }}</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+            <div class="form-group">
+                <label for="description">{{ _('Descripción') }}</label>
+                <textarea id="description" name="description" rows="5" required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="location">{{ _('Ubicación') }}</label>
+                <input type="text" id="location" name="location" required>
+            </div>
+            <button type="submit">{{ _('Publicar Oferta') }}</button>
+        </form>
+    </div>
+{% endblock %}
+
+home.html:
+{% extends 'base.html' %}
+
+{% block title %}{{ _('JobConnect') }}{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>{{ _('Bienvenido a JobConnect') }}</h1>
+    </header>
+    <div class="role-container">
+        <div class="role-card" onclick="window.location='{{ url_for('candidate_dashboard') }}'">
+            <h2>👤 {{ _('Busco Trabajo') }}</h2>
+            <p>{{ _('Regístrate y encuentra tu próximo empleo') }}</p>
+        </div>
+        <div class="role-card" onclick="window.location='{{ url_for('employer_dashboard') }}'">
+            <h2>🏢 {{ _('Soy Empresa') }}</h2>
+            <p>{{ _('Encuentra el talento que necesitas') }}</p>
+        </div>
+    </div>
+{% endblock %}
+
+index.html:
+{% extends 'base.html' %}
+
+{% block title %}{{ _('JOBFinder') }}{% endblock %}
+
+{% block content %}
+    <header>
+        <h1>{{ _('JOBFinder') }}</h1>
+    </header>
+    <div class="container">
+        <form method="POST" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="cv">{{ _('Sube tu CV (PDF o DOCX)') }}</label>
+                <input type="file" name="cv" id="cv" accept=".pdf,.docx" required>
+            </div>
+            <div class="form-group">
+                <label for="region">{{ _('Región') }}</label>
+                <select name="continent" id="region">
+                    <option value="all">{{ _('Todas las regiones') }}</option>
+                    <option value="asia">{{ _('Asia') }}</option>
+                    <option value="europa">{{ _('Europa') }}</option>
+                    <option value="américa">{{ _('América') }}</option>
+                </select>
+            </div>
+            <button type="submit">{{ _('Buscar trabajos') }}</button>
+        </form>
+    </div>
+    <div class="notification" id="notification">{{ _('CV cargado exitosamente') }} ✅</div>
+    <script>
+        document.querySelector('form').addEventListener('submit', function() {
+            const notification = document.getElementById('notification');
+            notification.style.display = 'block';
+            setTimeout(() => notification.style.display = 'none', 3000);
+        });
+    </script>
+{% endblock %}
+
+results.html:
+<!DOCTYPE html>
+<html lang="{{ get_locale() }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ _('Resultados - JOBFinder') }}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos generales */
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, #0077B5, #00A0DC);
+            padding: 60px 20px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 3em;
+            margin: 0;
+            font-weight: 600;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Contenedor de resultados */
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Lista de trabajos */
+        .job-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .job-item {
+            background: white;
+            margin-bottom: 25px;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .job-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .job-item h2 {
+            margin: 0 0 10px;
+            color: #0077B5;
+            font-size: 1.5em;
+        }
+
+        .job-item p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        .job-item ul {
+            margin: 10px 0 0;
+            padding-left: 20px;
+        }
+
+        .job-item ul li {
+            margin-bottom: 5px;
+            color: #666;
+        }
+
+        .apply-button {
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: #0077B5;
+            color: white;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+        .apply-button:hover {
+            background-color: #00A0DC;
+        }
+
+        /* Mensaje sin resultados */
+        .no-results {
+            text-align: center;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        /* Botón de volver */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 30px;
+            color: #0077B5;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>{{ _('JOBFinder') }}</h1>
+    </header>
+    <div class="container">
+        <h1>{{ _('Trabajos recomendados') }}</h1>
+        {% if jobs %}
+            <ul class="job-list">
+                {% for job in jobs %}
+                <li class="job-item">
+                    <h2>{{ job.title }}</h2>
+                    <p><strong>{{ _('Empresa') }}:</strong> {{ job.company }}</p>
+                    <p><strong>{{ _('Ubicación') }}:</strong> {{ job.location }}</p>
+                    <p><strong>{{ _('Por qué eres un buen candidato') }}:</strong></p>
+                    <ul>
+                        {% for reason in job.reasons %}
+                        <li>{{ reason }}</li>
+                        {% endfor %}
+                    </ul>
+                    <a href="{{ job.url }}" target="_blank" class="apply-button">{{ _('Postular') }}</a>
+                </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="no-results">{{ _('No se encontraron trabajos que coincidan con tu CV') }} 😢</p>
+        {% endif %}
+        <a href="/" class="back-link">{{ _('Volver') }}</a>
+    </div>
+</body>
+</html>
+
