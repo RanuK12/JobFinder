@@ -1,0 +1,70 @@
+2025-06-06 12:06:02,192 - __main__ - INFO - Starting job search...
+2025-06-06 12:06:02,193 - __main__ - ERROR - Error during testing: 'Cache' object has no attribute 'app'
+Traceback (most recent call last):
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 834, in decorated_function
+    cache_key = decorated_function.make_cache_key(f, *args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 591, in make_cache_key
+    fname, version_data = self._memoize_version(
+                          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 541, in _memoize_version
+    version_data_list = list(self.cache.get_many(*fetch_keys))
+                             ^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 180, in cache
+    app = current_app or self.app
+                         ^^^^^^^^
+AttributeError: 'Cache' object has no attribute 'app'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\emilio\Desktop\Oficina Ranuk\Job_finder_app\test_scraper.py", line 37, in test_scraper
+    jobs = scraper.get_jobs(cv_text, lang='en')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 866, in decorated_function
+    if self.app.debug:
+       ^^^^^^^^
+AttributeError: 'Cache' object has no attribute 'app'
+2025-06-06 13:33:12,356 - __main__ - INFO - Starting job search...
+2025-06-06 13:33:12,356 - __main__ - ERROR - Error during testing: 'Cache' object has no attribute 'app'
+Traceback (most recent call last):
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 834, in decorated_function
+    cache_key = decorated_function.make_cache_key(f, *args, **kwargs)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 591, in make_cache_key
+    fname, version_data = self._memoize_version(
+                          ^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 541, in _memoize_version
+    version_data_list = list(self.cache.get_many(*fetch_keys))
+                             ^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 180, in cache
+    app = current_app or self.app
+                         ^^^^^^^^
+AttributeError: 'Cache' object has no attribute 'app'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "C:\Users\emilio\Desktop\Oficina Ranuk\Job_finder_app\test_scraper.py", line 37, in test_scraper
+    jobs = scraper.get_jobs(cv_text, lang='en')
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\emilio\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\LocalCache\local-packages\Python312\site-packages\flask_caching\__init__.py", line 866, in decorated_function
+    if self.app.debug:
+       ^^^^^^^^
+AttributeError: 'Cache' object has no attribute 'app'
+2025-06-09 12:20:34,320 - JobScraper - INFO - Starting job search
+2025-06-09 12:20:34,320 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:20:43,583 - JobScraper - INFO - Starting job search
+2025-06-09 12:20:43,585 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:22:14,586 - JobScraper - INFO - Starting job search
+2025-06-09 12:22:14,587 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:22:23,469 - JobScraper - INFO - Starting job search
+2025-06-09 12:22:23,477 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:23:23,586 - JobScraper - INFO - Starting job search
+2025-06-09 12:23:23,586 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:30:42,001 - JobScraper - INFO - Starting job search
+2025-06-09 12:30:42,001 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:31:24,329 - JobScraper - INFO - Starting job search
+2025-06-09 12:31:24,331 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>
+2025-06-09 12:38:34,197 - JobScraper - INFO - Starting job search
+2025-06-09 12:38:34,197 - JobScraper - ERROR - Invalid CV text type: <class 'NoneType'>

@@ -5,7 +5,7 @@ from flask_babel import Babel, gettext as _
 from flask import Flask, request, session, redirect, url_for, render_template, flash, jsonify
 from werkzeug.utils import secure_filename
 import os
-from scraper import get_jobs
+from scraper import JobScraper
 from cv_parser import parse_cv
 
 app = Flask(__name__)
@@ -43,6 +43,7 @@ def inject_language():
 db = SQLAlchemy(app)
 login_manager = LoginManager(app)
 login_manager.login_view = 'login'
+scraper = JobScraper(app)
 
 # Modelo de usuarios
 class User(UserMixin, db.Model):
@@ -98,7 +99,7 @@ def index():
             cv_text = parse_cv(filepath)
 
             # Obtener trabajos basados en el CV
-            jobs = get_jobs(cv_text)  # 🔹 Se eliminó el tercer parámetro incorrecto
+            jobs = scraper.get_jobs(cv_text, get_locale())
 
             if jobs:
                 flash(_('Se encontraron trabajos recomendados.'), 'success')
@@ -217,7 +218,16 @@ def update_profile():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             current_user.profile_picture = f'profiles/{filename}'
-            
+
+    # Actualizar habilidades
+    skills = request.form.get('skills', '').strip()
+    if skills:
+        current_user.skills = ', '.join([skill.strip() for skill in skills.split(',') if skill.strip()])
+
+    db.session.commit()
+    flash(_('Perfil actualizado correctamente.'), 'success')
+    return redirect(url_for('candidate_dashboard'))
+
 @app.route('/apply_job', methods=['POST'])
 @login_required
 def apply_job():
