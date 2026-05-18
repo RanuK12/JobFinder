@@ -1,28 +1,906 @@
-# English translations for PROJECT.
-# Copyright (C) 2025 ORGANIZATION
-# This file is distributed under the same license as the PROJECT project.
-# FIRST AUTHOR <EMAIL@ADDRESS>, 2025.
+# English translations for JobConnect.
+# Copyright (C) 2025 JobConnect
+# This file is distributed under the same license as the JobConnect project.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: PROJECT VERSION\n"
-"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
-"POT-Creation-Date: 2025-02-01 23:21+0100\n"
-"PO-Revision-Date: 2025-02-01 23:21+0100\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Project-Id-Version: JobConnect 1.0\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-05-18 00:00+0000\n"
+"PO-Revision-Date: 2025-05-18 00:00+0000\n"
+"Last-Translator: JobConnect Team\n"
 "Language: en\n"
-"Language-Team: en <LL@li.org>\n"
+"Language-Team: en <en@jobconnect.com>\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: Babel 2.17.0\n"
 
-msgid "JOBFinder"
-msgstr "JOBFinder"
+msgid "3 pasos para tu próximo empleo"
+msgstr "3 steps to your next job"
 
-msgid "Upload your CV (PDF or DOCX)"
-msgstr "Upload your CV (PDF or DOCX)"
+msgid "5 fuentes activas"
+msgstr "5 active sources"
 
-msgid "Search for jobs"
-msgstr "Search for jobs"
+msgid "Abierto/a a oportunidades"
+msgstr "Open to opportunities"
+
+msgid "Abierto a oportunidades"
+msgstr "Open to opportunities"
+
+msgid "Acceso Denegado"
+msgstr "Access Denied"
+
+msgid "Acciones"
+msgstr "Actions"
+
+msgid "Acepto los"
+msgstr "I accept the"
+
+msgid "Activa"
+msgstr "Active"
+
+msgid "Activar"
+msgstr "Activate"
+
+msgid "activas"
+msgstr "active"
+
+msgid "Activo"
+msgstr "Active"
+
+msgid "actualmente oculto"
+msgstr "currently hidden"
+
+msgid "Admin"
+msgstr "Admin"
+
+msgid "Administrador"
+msgstr "Administrator"
+
+msgid "Alemania"
+msgstr "Germany"
+
+msgid "Algo salió mal. Por favor, inténtalo de nuevo más tarde."
+msgstr "Something went wrong. Please try again later."
+
+msgid "Analizamos tu CV para ranking personalizado"
+msgstr "We analyze your CV for personalized ranking"
+
+msgid "años de experiencia"
+msgstr "years of experience"
+
+msgid "Años de experiencia"
+msgstr "Years of experience"
+
+msgid "Aplicados"
+msgstr "Applied"
+
+msgid "Argentina"
+msgstr "Argentina"
+
+msgid "Así de fácil funciona"
+msgstr "This is how easy it works"
+
+msgid "Aún no tienes habilidades. Agrégalas para mejorar tus matches."
+msgstr "You don't have any skills yet. Add them to improve your matches."
+
+msgid "Aún no tienes trabajos en tu pipeline."
+msgstr "You don't have any jobs in your pipeline yet."
+
+msgid "Australia"
+msgstr "Australia"
+
+msgid "Bienvenido de vuelta"
+msgstr "Welcome back"
+
+msgid "Brasil"
+msgstr "Brazil"
+
+msgid "Busca"
+msgstr "Search"
+
+msgid "Busca en 5+ plataformas a la vez"
+msgstr "Search 5+ platforms at once"
+
+msgid "Busca en LinkedIn, Indeed, Google Jobs y más plataformas a la vez"
+msgstr "Search LinkedIn, Indeed, Google Jobs and more platforms at once"
+
+msgid "Buscamos en"
+msgstr "We search on"
+
+msgid "Buscando trabajos..."
+msgstr "Searching for jobs..."
+
+msgid "Buscar"
+msgstr "Search"
+
+msgid "Buscar Más"
+msgstr "Search More"
+
+msgid "Buscar más trabajos"
+msgstr "Search more jobs"
+
+msgid "Buscar Trabajos"
+msgstr "Search Jobs"
+
+msgid "Busca trabajos y guárdalos aquí para hacer seguimiento de tu proceso."
+msgstr "Search for jobs and save them here to track your process."
+
+msgid "Busco Trabajo"
+msgstr "I'm Looking for Work"
+
+msgid "Cambiar"
+msgstr "Change"
+
+msgid "Cambiar tipo..."
+msgstr "Change type..."
+
+msgid "Canadá"
+msgstr "Canada"
+
+msgid "Cancelar"
+msgstr "Cancel"
+
+msgid "Candidato"
+msgstr "Candidate"
+
+msgid "candidatos"
+msgstr "candidates"
+
+msgid "Cerrar Sesión"
+msgstr "Log Out"
+
+msgid "Chile"
+msgstr "Chile"
+
+msgid "Colombia"
+msgstr "Colombia"
+
+msgid "Comparte tu perfil profesional con un solo enlace"
+msgstr "Share your professional profile with a single link"
+
+msgid "Compartir perfil"
+msgstr "Share profile"
+
+msgid "Completar perfil"
+msgstr "Complete profile"
+
+msgid "Completa tu perfil"
+msgstr "Complete your profile"
+
+msgid "Conectamos talento con"
+msgstr "We connect talent with"
+
+msgid "Conectar"
+msgstr "Connect"
+
+msgid "Confirmar"
+msgstr "Confirm"
+
+msgid "Consultando LinkedIn, Indeed, Google Jobs y más"
+msgstr "Querying LinkedIn, Indeed, Google Jobs and more"
+
+msgid "Contactar"
+msgstr "Contact"
+
+msgid "Contraseña"
+msgstr "Password"
+
+msgid "Contrato / Freelance"
+msgstr "Contract / Freelance"
+
+msgid "Controla el estado de cada postulación"
+msgstr "Track the status of each application"
+
+msgid "Copiar enlace"
+msgstr "Copy link"
+
+msgid "Correo Electrónico"
+msgstr "Email"
+
+msgid "Crear Cuenta"
+msgstr "Create Account"
+
+msgid "Crear Cuenta Gratis"
+msgstr "Create Free Account"
+
+msgid "Crear Oferta Laboral"
+msgstr "Create Job Posting"
+
+msgid "Crear Primera Oferta"
+msgstr "Create First Posting"
+
+msgid "Crear Usuario"
+msgstr "Create User"
+
+msgid "Crea tu cuenta gratis y encuentra tu próximo empleo en minutos"
+msgstr "Create your free account and find your next job in minutes"
+
+msgid "Cuenta tu historia profesional. Tus logros, tu forma de trabajar, lo que te apasiona..."
+msgstr "Tell your professional story. Your achievements, your work style, what drives you..."
+
+msgid "CV actual disponible"
+msgstr "Current CV available"
+
+msgid "CV / Resume"
+msgstr "CV / Resume"
+
+msgid "Demasiadas Solicitudes"
+msgstr "Too Many Requests"
+
+msgid "Desactivar"
+msgstr "Deactivate"
+
+msgid "Descargar CV"
+msgstr "Download CV"
+
+msgid "Describe las responsabilidades y el día a día del puesto..."
+msgstr "Describe the responsibilities and day-to-day of the position..."
+
+msgid "Descripción"
+msgstr "Description"
+
+msgid "Descripción del Puesto"
+msgstr "Job Description"
+
+msgid "Editar"
+msgstr "Edit"
+
+msgid "Editar mi Perfil"
+msgstr "Edit my Profile"
+
+msgid "Editar Oferta Laboral"
+msgstr "Edit Job Posting"
+
+msgid "Editar perfil"
+msgstr "Edit profile"
+
+msgid "Editar Perfil"
+msgstr "Edit Profile"
+
+msgid "Ej: $50,000 - $70,000 USD/año"
+msgstr "E.g.: $50,000 - $70,000 USD/year"
+
+msgid "Ej: Buenos Aires, Argentina"
+msgstr "E.g.: Buenos Aires, Argentina"
+
+msgid "Ej: Desarrollador Full Stack Senior"
+msgstr "E.g.: Senior Full Stack Developer"
+
+msgid "Ej: Madrid, Remote..."
+msgstr "E.g.: Madrid, Remote..."
+
+msgid "Ej: Remote, Madrid, etc."
+msgstr "E.g.: Remote, Madrid, etc."
+
+msgid "Ej: Senior Python Developer | Open to remote opportunities"
+msgstr "E.g.: Senior Python Developer | Open to remote opportunities"
+
+msgid "Ej: USD 60k-90k / año"
+msgstr "E.g.: USD 60k-90k / year"
+
+msgid "Eliminar"
+msgstr "Delete"
+
+msgid "¿Eliminar esta oferta?"
+msgstr "Delete this posting?"
+
+msgid "¿Eliminar este trabajo de tu pipeline?"
+msgstr "Remove this job from your pipeline?"
+
+msgid "¿Eliminar este usuario? Esta acción no se puede deshacer."
+msgstr "Delete this user? This action cannot be undone."
+
+msgid "Email"
+msgstr "Email"
+
+msgid "Empieza buscando →"
+msgstr "Start searching →"
+
+msgid "Empieza tu búsqueda hoy"
+msgstr "Start your search today"
+
+msgid "Empleador"
+msgstr "Employer"
+
+msgid "empleadores"
+msgstr "employers"
+
+msgid "Empresa"
+msgstr "Company"
+
+msgid "Encuentra tu próximo empleo o el candidato ideal. Una búsqueda, múltiples fuentes, resultados rankeados por IA."
+msgstr "Find your next job or the ideal candidate. One search, multiple sources, AI-ranked results."
+
+msgid "Encuentra tu próximo trabajo"
+msgstr "Find your next job"
+
+msgid "Enlaces y redes"
+msgstr "Links & networks"
+
+msgid "Entrevistas"
+msgstr "Interviews"
+
+msgid "Error del Servidor"
+msgstr "Server Error"
+
+msgid "Error Interno del Servidor"
+msgstr "Internal Server Error"
+
+msgid "España"
+msgstr "Spain"
+
+msgid "Estado"
+msgstr "Status"
+
+msgid "Estados Unidos"
+msgstr "United States"
+
+msgid "¿Estás seguro de eliminar esta oferta?"
+msgstr "Are you sure you want to delete this posting?"
+
+msgid "Estás viendo tu perfil público"
+msgstr "You are viewing your public profile"
+
+msgid "Fecha"
+msgstr "Date"
+
+msgid "Foto"
+msgstr "Photo"
+
+msgid "Francia"
+msgstr "France"
+
+msgid "Freelance/Contrato"
+msgstr "Freelance/Contract"
+
+msgid "Fuentes"
+msgstr "Sources"
+
+msgid "Gestionar Ofertas"
+msgstr "Manage Postings"
+
+msgid "Gestionar Usuarios"
+msgstr "Manage Users"
+
+msgid "Gestiona tus postulaciones y seguimiento"
+msgstr "Manage your applications and follow-ups"
+
+msgid "Gestiona tus publicaciones de empleo"
+msgstr "Manage your job postings"
+
+msgid "Gratuito"
+msgstr "Free"
+
+msgid "Guardados"
+msgstr "Saved"
+
+msgid "Guarda ofertas, actualiza estados y lleva el control de todo tu proceso."
+msgstr "Save offers, update statuses, and keep track of your entire process."
+
+msgid "Guardar"
+msgstr "Save"
+
+msgid "Guardar cambios"
+msgstr "Save changes"
+
+msgid "Guardar Cambios"
+msgstr "Save Changes"
+
+msgid "Guardar y ver perfil"
+msgstr "Save and view profile"
+
+msgid "Habilidades"
+msgstr "Skills"
+
+msgid "Has realizado demasiadas solicitudes. Por favor, espera un momento e inténtalo de nuevo."
+msgstr "You've made too many requests. Please wait a moment and try again."
+
+msgid "Haz clic o arrastra tu CV (PDF/DOCX)"
+msgstr "Click or drag your CV (PDF/DOCX)"
+
+msgid "IA Rankea"
+msgstr "AI Ranks"
+
+msgid "Inactiva"
+msgstr "Inactive"
+
+msgid "Inactivo"
+msgstr "Inactive"
+
+msgid "India"
+msgstr "India"
+
+msgid "Información"
+msgstr "Information"
+
+msgid "Información básica"
+msgstr "Basic information"
+
+msgid "Información de empresa"
+msgstr "Company information"
+
+msgid "Ingresa el puesto que buscas. Nosotros consultamos LinkedIn, Indeed, Google Jobs y más."
+msgstr "Enter the position you're looking for. We query LinkedIn, Indeed, Google Jobs and more."
+
+msgid "Iniciar Sesión"
+msgstr "Log In"
+
+msgid "Inicia Sesión"
+msgstr "Log In"
+
+msgid "Inicia sesión para continuar en JobConnect"
+msgstr "Log in to continue on JobConnect"
+
+msgid "Intenta con otros términos o menos filtros"
+msgstr "Try other terms or fewer filters"
+
+msgid "Italia"
+msgstr "Italy"
+
+msgid "JobConnect - Conectamos talento con oportunidades laborales"
+msgstr "JobConnect - Connecting talent with job opportunities"
+
+msgid "JobConnect - Encuentra tu próximo trabajo"
+msgstr "JobConnect - Find your next job"
+
+msgid "Lo sentimos, la página que buscas no existe o fue movida."
+msgstr "Sorry, the page you're looking for doesn't exist or has been moved."
+
+msgid "Marca \"Solo remoto\" para encontrar trabajos desde cualquier lugar"
+msgstr "Check \"Remote only\" to find jobs from anywhere"
+
+msgid "Más filtros"
+msgstr "More filters"
+
+msgid "Medio tiempo"
+msgstr "Part time"
+
+msgid "Medio Tiempo"
+msgstr "Part Time"
+
+msgid "México"
+msgstr "Mexico"
+
+msgid "Mi Dashboard"
+msgstr "My Dashboard"
+
+msgid "Miembro desde"
+msgstr "Member since"
+
+msgid "Mínimo 8 caracteres"
+msgstr "Minimum 8 characters"
+
+msgid "Mi Perfil"
+msgstr "My Profile"
+
+msgid "Mi Pipeline"
+msgstr "My Pipeline"
+
+msgid "Mi Pipeline de Trabajos"
+msgstr "My Job Pipeline"
+
+msgid "Mis Habilidades"
+msgstr "My Skills"
+
+msgid "Mis Ofertas Laborales"
+msgstr "My Job Postings"
+
+msgid "Modalidad"
+msgstr "Work mode"
+
+msgid "Muestra el badge \"Open to work\" en tu perfil"
+msgstr "Show the \"Open to work\" badge on your profile"
+
+msgid "Multi-fuente"
+msgstr "Multi-source"
+
+msgid "No hay ofertas disponibles"
+msgstr "No postings available"
+
+msgid "No hay ofertas publicadas todavía."
+msgstr "No postings published yet."
+
+msgid "No hay postulaciones registradas."
+msgstr "No applications registered."
+
+msgid "Nombre completo"
+msgstr "Full name"
+
+msgid "Nombre Completo"
+msgstr "Full Name"
+
+msgid "Nombre de empresa"
+msgstr "Company name"
+
+msgid "Nombre de la empresa"
+msgstr "Company name"
+
+msgid "Nombre de usuario (URL pública)"
+msgstr "Username (public URL)"
+
+msgid "No se encontraron resultados"
+msgstr "No results found"
+
+msgid "No tienes permisos para acceder a esta página."
+msgstr "You don't have permission to access this page."
+
+msgid "¿No tienes una cuenta?"
+msgstr "Don't have an account?"
+
+msgid "Nueva Búsqueda"
+msgstr "New Search"
+
+msgid "Nueva Oferta"
+msgstr "New Posting"
+
+msgid "Nueva Oferta Laboral"
+msgstr "New Job Posting"
+
+msgid "Oferta activa (visible para candidatos)"
+msgstr "Active posting (visible to candidates)"
+
+msgid "Ofertas"
+msgstr "Jobs"
+
+msgid "Ofertas activas"
+msgstr "Active postings"
+
+msgid "ofertas en total"
+msgstr "total postings"
+
+msgid "Ofertas Laborales"
+msgstr "Job Postings"
+
+msgid "Ofertas Recientes"
+msgstr "Recent Postings"
+
+msgid "¿Olvidaste tu contraseña?"
+msgstr "Forgot your password?"
+
+msgid "opcional"
+msgstr "optional"
+
+msgid "Open to work"
+msgstr "Open to work"
+
+msgid "oportunidades"
+msgstr "opportunities"
+
+msgid "Página no encontrada"
+msgstr "Page not found"
+
+msgid "País"
+msgstr "Country"
+
+msgid "Países Bajos"
+msgstr "Netherlands"
+
+msgid "Panel Admin"
+msgstr "Admin Panel"
+
+msgid "Panel de Administración"
+msgstr "Administration Panel"
+
+msgid "Panel del Empleador"
+msgstr "Employer Panel"
+
+msgid "pasos."
+msgstr "steps."
+
+msgid "PDF o DOCX. Será visible/descargable en tu perfil público."
+msgstr "PDF or DOCX. It will be visible/downloadable on your public profile."
+
+msgid "Perfil profesional"
+msgstr "Professional profile"
+
+msgid "Perfil público"
+msgstr "Public profile"
+
+msgid "Pipeline"
+msgstr "Pipeline"
+
+msgid "Pipeline visual"
+msgstr "Visual pipeline"
+
+msgid "política de privacidad"
+msgstr "privacy policy"
+
+msgid "¿Por qué elegir JobConnect?"
+msgstr "Why choose JobConnect?"
+
+msgid "Portfolio / Web"
+msgstr "Portfolio / Web"
+
+msgid "Postulaciones"
+msgstr "Applications"
+
+msgid "postulaciones en total"
+msgstr "total applications"
+
+msgid "Prácticas"
+msgstr "Internship"
+
+msgid "Preferencias laborales"
+msgstr "Job preferences"
+
+msgid "Privacidad"
+msgstr "Privacy"
+
+msgid "Publicado"
+msgstr "Published"
+
+msgid "Publicar Oferta"
+msgstr "Publish Posting"
+
+msgid "Publica tu primera oferta laboral para atraer talento."
+msgstr "Publish your first job posting to attract talent."
+
+msgid "Python, React, AWS..."
+msgstr "Python, React, AWS..."
+
+msgid "Python, React, AWS, Docker, SQL, Project Management"
+msgstr "Python, React, AWS, Docker, SQL, Project Management"
+
+msgid "¿Qué puesto buscas? Ej: Python Developer, Marketing Manager..."
+msgstr "What position are you looking for? E.g.: Python Developer, Marketing Manager..."
+
+msgid "Rango Salarial"
+msgstr "Salary Range"
+
+msgid "Ranking con IA"
+msgstr "AI Ranking"
+
+msgid "Rápido"
+msgstr "Fast"
+
+msgid "Recordarme"
+msgstr "Remember me"
+
+msgid "Regístrate gratis"
+msgstr "Sign up free"
+
+msgid "Regístrate Gratis"
+msgstr "Sign Up Free"
+
+msgid "Registro"
+msgstr "Sign Up"
+
+msgid "Reino Unido"
+msgstr "United Kingdom"
+
+msgid "Remoto"
+msgstr "Remote"
+
+msgid "Requisitos"
+msgstr "Requirements"
+
+msgid "Requisitos técnicos y experiencia necesaria..."
+msgstr "Technical requirements and necessary experience..."
+
+msgid "¿Resetear contraseña?"
+msgstr "Reset password?"
+
+msgid "Reset Pass (NewPass123!)"
+msgstr "Reset Pass (NewPass123!)"
+
+msgid "Resultados"
+msgstr "Results"
+
+msgid "Resultados de Búsqueda"
+msgstr "Search Results"
+
+msgid "Resultados ordenados por match con tu CV"
+msgstr "Results sorted by match with your CV"
+
+msgid "Salario esperado"
+msgstr "Expected salary"
+
+msgid "Seguro"
+msgstr "Secure"
+
+msgid "Separa cada habilidad con coma. Mejora el matching de trabajos."
+msgstr "Separate each skill with a comma. Improves job matching."
+
+msgid "Si está activo, cualquiera puede ver tu perfil en /u/<usuario>"
+msgstr "If active, anyone can view your profile at /u/<username>"
+
+msgid "Sin ofertas publicadas"
+msgstr "No postings published"
+
+msgid "Sin preferencia"
+msgstr "No preference"
+
+msgid "Sitio web"
+msgstr "Website"
+
+msgid "Skills"
+msgstr "Skills"
+
+msgid "Sobre mí"
+msgstr "About me"
+
+msgid "Solo me interesan trabajos 100% a distancia"
+msgstr "I'm only interested in 100% remote jobs"
+
+msgid "Solo minúsculas, números y guiones"
+msgstr "Only lowercase, numbers and hyphens"
+
+msgid "Solo remoto"
+msgstr "Remote only"
+
+msgid "Soy Empresa"
+msgstr "I'm a Company"
+
+msgid "Sube tu CV para mejores resultados"
+msgstr "Upload your CV for better results"
+
+msgid "Sube tu CV para que rankeemos los resultados según tu experiencia"
+msgstr "Upload your CV so we can rank results based on your experience"
+
+msgid "Sube tu CV y nuestra IA rankea resultados por compatibilidad con tu perfil."
+msgstr "Upload your CV and our AI ranks results by compatibility with your profile."
+
+msgid "términos y condiciones"
+msgstr "terms and conditions"
+
+msgid "Tiempo completo"
+msgstr "Full time"
+
+msgid "Tiempo Completo"
+msgstr "Full Time"
+
+msgid "Tip: Esto aparece en tu perfil público. Sé auténtico/a."
+msgstr "Tip: This appears on your public profile. Be authentic."
+
+msgid "Tipo"
+msgstr "Type"
+
+msgid "Tipo de Contrato"
+msgstr "Contract Type"
+
+msgid "Tipo de empleo preferido"
+msgstr "Preferred job type"
+
+msgid "Tipo de Usuario"
+msgstr "User Type"
+
+msgid "Tipo preferido"
+msgstr "Preferred type"
+
+msgid "Tips para mejores resultados"
+msgstr "Tips for better results"
+
+msgid "Titular"
+msgstr "Headline"
+
+msgid "Titular profesional"
+msgstr "Professional headline"
+
+msgid "Título"
+msgstr "Title"
+
+msgid "Título del Puesto"
+msgstr "Job Title"
+
+msgid "Todas las Postulaciones"
+msgstr "All Applications"
+
+msgid "Todos"
+msgstr "All"
+
+msgid "Todos los derechos reservados"
+msgstr "All rights reserved"
+
+msgid "Todos los países"
+msgstr "All countries"
+
+msgid "Total"
+msgstr "Total"
+
+msgid "Trabajo"
+msgstr "Job"
+
+msgid "trabajos encontrados"
+msgstr "jobs found"
+
+msgid "Trackea"
+msgstr "Track"
+
+msgid "Tu nombre completo"
+msgstr "Your full name"
+
+msgid "Tu perfil es tu vidriera profesional. Hazlo brillar."
+msgstr "Your profile is your professional showcase. Make it shine."
+
+msgid "Tu pipeline está vacío"
+msgstr "Your pipeline is empty"
+
+msgid "Tu vidriera pública estilo LinkedIn"
+msgstr "Your LinkedIn-style public showcase"
+
+msgid "Ubicación"
+msgstr "Location"
+
+msgid "Una frase que te describa profesionalmente"
+msgstr "A sentence that describes you professionally"
+
+msgid "Una sola búsqueda en 5+ plataformas de empleo"
+msgstr "One search across 5+ job platforms"
+
+msgid "Únete y encuentra tu próximo empleo"
+msgstr "Join and find your next job"
+
+msgid "Un perfil completo recibe 5x más oportunidades. Solo te faltan"
+msgstr "A complete profile gets 5x more opportunities. You only need"
+
+msgid "URL de la Oferta (opcional)"
+msgstr "Job URL (optional)"
+
+msgid "Usa términos en inglés para encontrar más ofertas internacionales"
+msgstr "Use English terms to find more international postings"
+
+msgid "Usuario"
+msgstr "User"
+
+msgid "Usuarios Recientes"
+msgstr "Recent Users"
+
+msgid "usuarios registrados"
+msgstr "registered users"
+
+msgid "Usuarios Totales"
+msgstr "Total Users"
+
+msgid "Ver"
+msgstr "View"
+
+msgid "Ver Detalle"
+msgstr "View Detail"
+
+msgid "Ver oferta"
+msgstr "View posting"
+
+msgid "Ver Oferta"
+msgstr "View Posting"
+
+msgid "Ver Oferta Original"
+msgstr "View Original Posting"
+
+msgid "Ver Ofertas"
+msgstr "View Postings"
+
+msgid "Ver perfil"
+msgstr "View profile"
+
+msgid "Ver perfil público"
+msgstr "View public profile"
+
+msgid "Ver Postulaciones"
+msgstr "View Applications"
+
+msgid "Ver todo"
+msgstr "View all"
+
+msgid "Visa/Relocation"
+msgstr "Visa/Relocation"
+
+msgid "Vista general del sistema"
+msgstr "System overview"
+
+msgid "Volver"
+msgstr "Back"
+
+msgid "Volver al Inicio"
+msgstr "Back to Home"
+
+msgid "Vuelve pronto, se publican nuevas ofertas regularmente."
+msgstr "Come back soon, new postings are published regularly."
+
+msgid "¿Ya tienes una cuenta?"
+msgstr "Already have an account?"
+
+msgid "y la"
+msgstr "and the"
