@@ -63,7 +63,11 @@ def admin_required(f):
 # =============================================================================
 
 class User(UserMixin, db.Model):
-    """User model for authentication and profile management."""
+    """User model with portfolio-style showcase profile.
+
+    A candidate's profile is their public showcase to recruiters - includes
+    bio, headline, location, social links, CV link, work experience, etc.
+    """
 
     __tablename__ = 'users'
 
@@ -77,6 +81,32 @@ class User(UserMixin, db.Model):
     user_type = db.Column(db.String(20), nullable=False)  # candidate/employer/admin
     skills = db.Column(db.Text, default='')
     is_active_user = db.Column(db.Boolean, default=True)
+
+    # Public showcase profile fields
+    username = db.Column(db.String(50), unique=True, index=True, nullable=True)
+    headline = db.Column(db.String(200), default='')   # e.g. "Senior Python Developer"
+    bio = db.Column(db.Text, default='')                # multi-paragraph about
+    location = db.Column(db.String(120), default='')    # e.g. "Buenos Aires, Argentina"
+    years_experience = db.Column(db.Integer, default=0)
+    open_to_work = db.Column(db.Boolean, default=True)  # toggle visibility
+    is_public = db.Column(db.Boolean, default=True)     # public profile visibility
+
+    # Social/portfolio links
+    linkedin_url = db.Column(db.String(300), default='')
+    github_url = db.Column(db.String(300), default='')
+    portfolio_url = db.Column(db.String(300), default='')
+    twitter_url = db.Column(db.String(300), default='')
+    cv_url = db.Column(db.String(300), default='')      # uploaded CV file path
+
+    # Preferences
+    preferred_job_type = db.Column(db.String(50), default='')   # fulltime/contract/etc
+    preferred_remote = db.Column(db.Boolean, default=False)
+    expected_salary = db.Column(db.String(100), default='')      # e.g. "USD 80k-120k"
+
+    # Employer specific
+    company_name = db.Column(db.String(150), default='')
+    company_website = db.Column(db.String(300), default='')
+
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
         db.DateTime, default=lambda: datetime.now(timezone.utc),
@@ -97,9 +127,23 @@ class User(UserMixin, db.Model):
         """Check if the provided password matches the hash."""
         return check_password_hash(self.password_hash, password)
 
+    def generate_username(self):
+        """Generate a URL-safe username from email or full name."""
+        import re as _re
+        base = (self.full_name or self.email.split('@')[0]).lower()
+        slug = _re.sub(r'[^a-z0-9]+', '-', base).strip('-')[:40]
+        return slug or f'user{self.id}'
+
     @property
     def is_admin(self):
         return self.user_type == 'admin'
+
+    @property
+    def skill_list(self):
+        """Return list of skills, cleaned up."""
+        if not self.skills:
+            return []
+        return [s.strip() for s in self.skills.split(',') if s.strip()]
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -297,16 +341,55 @@ def _migrate_database():
     try:
         inspector = inspect(db.engine)
 
-        # Users table migrations
+        # Users table migrations - adds new profile showcase columns
         if 'users' in inspector.get_table_names():
             columns = [col['name'] for col in inspector.get_columns('users')]
-            if 'is_active_user' not in columns:
-                with db.engine.connect() as conn:
-                    conn.execute(text(
-                        'ALTER TABLE users ADD COLUMN is_active_user BOOLEAN DEFAULT TRUE'
-                    ))
-                    conn.commit()
-                logger.info("Migration: Added is_active_user column")
+            user_migrations = {
+                'is_active_user': 'ALTER TABLE users ADD COLUMN is_active_user BOOLEAN DEFAULT TRUE',
+                'username': 'ALTER TABLE users ADD COLUMN username VARCHAR(50) UNIQUE',
+                'headline': "ALTER TABLE users ADD COLUMN headline VARCHAR(200) DEFAULT ''",
+                'bio': "ALTER TABLE users ADD COLUMN bio TEXT DEFAULT ''",
+                'location': "ALTER TABLE users ADD COLUMN location VARCHAR(120) DEFAULT ''",
+                'years_experience': 'ALTER TABLE users ADD COLUMN years_experience INTEGER DEFAULT 0',
+                'open_to_work': 'ALTER TABLE users ADD COLUMN open_to_work BOOLEAN DEFAULT TRUE',
+                'is_public': 'ALTER TABLE users ADD COLUMN is_public BOOLEAN DEFAULT TRUE',
+                'linkedin_url': "ALTER TABLE users ADD COLUMN linkedin_url VARCHAR(300) DEFAULT ''",
+                'github_url': "ALTER TABLE users ADD COLUMN github_url VARCHAR(300) DEFAULT ''",
+                'portfolio_url': "ALTER TABLE users ADD COLUMN portfolio_url VARCHAR(300) DEFAULT ''",
+                'twitter_url': "ALTER TABLE users ADD COLUMN twitter_url VARCHAR(300) DEFAULT ''",
+                'cv_url': "ALTER TABLE users ADD COLUMN cv_url VARCHAR(300) DEFAULT ''",
+                'preferred_job_type': "ALTER TABLE users ADD COLUMN preferred_job_type VARCHAR(50) DEFAULT ''",
+                'preferred_remote': 'ALTER TABLE users ADD COLUMN preferred_remote BOOLEAN DEFAULT FALSE',
+                'expected_salary': "ALTER TABLE users ADD COLUMN expected_salary VARCHAR(100) DEFAULT ''",
+                'company_name': "ALTER TABLE users ADD COLUMN company_name VARCHAR(150) DEFAULT ''",
+                'company_website': "ALTER TABLE users ADD COLUMN company_website VARCHAR(300) DEFAULT ''",
+            }
+            with db.engine.connect() as conn:
+                for col_name, sql in user_migrations.items():
+                    if col_name not in columns:
+                        try:
+                            conn.execute(text(sql))
+                            logger.info(f"Migration: Added users.{col_name}")
+                        except Exception as e:
+                            logger.debug(f"Skip users.{col_name}: {e}")
+                conn.commit()
+
+            # Backfill usernames for existing users
+            users_no_username = User.query.filter(
+                (User.username == None) | (User.username == '')  # noqa: E711
+            ).all()
+            for user in users_no_username:
+                base = user.generate_username()
+                # Ensure uniqueness
+                username = base
+                counter = 1
+                while User.query.filter_by(username=username).first():
+                    username = f"{base}-{counter}"
+                    counter += 1
+                user.username = username
+            if users_no_username:
+                db.session.commit()
+                logger.info(f"Backfilled {len(users_no_username)} usernames")
 
         # Applications table migrations
         if 'applications' in inspector.get_table_names():
@@ -325,7 +408,7 @@ def _migrate_database():
                     if col_name not in columns:
                         try:
                             conn.execute(text(sql))
-                            logger.info(f"Migration: Added {col_name} to applications")
+                            logger.info(f"Migration: Added applications.{col_name}")
                         except Exception:
                             pass  # Column might already exist
                 conn.commit()
@@ -343,7 +426,10 @@ def _ensure_admin_exists():
             full_name='Administrador',
             user_type='admin',
             skills='',
-            is_active_user=True
+            is_active_user=True,
+            username='admin',
+            headline='Administrator',
+            is_public=False,
         )
         admin.set_password('Admin123!')
         db.session.add(admin)
@@ -454,6 +540,18 @@ def _register_routes(app):
             new_user.set_password(password)
 
             db.session.add(new_user)
+            db.session.flush()  # Get the user ID before commit
+
+            # Assign a unique username from the user's name
+            base = new_user.generate_username()
+            username = base
+            counter = 1
+            while User.query.filter(User.username == username,
+                                    User.id != new_user.id).first():
+                username = f"{base}-{counter}"
+                counter += 1
+            new_user.username = username
+
             db.session.commit()
 
             login_user(new_user)
@@ -589,7 +687,10 @@ def _register_routes(app):
                     else:
                         matched_jobs = jobs
 
-                    session['matched_jobs'] = matched_jobs[:50]  # Limit for session size
+                    # Store results in server-side cache (not cookie) keyed by user
+                    matched_jobs = matched_jobs[:50]
+                    cache_key = f'matched_jobs_user_{current_user.id}'
+                    cache.set(cache_key, matched_jobs, timeout=3600)
                     flash(
                         _('Se encontraron %(count)s trabajos.',
                           count=len(matched_jobs)),
@@ -617,7 +718,8 @@ def _register_routes(app):
     @login_required
     def results():
         """Display job search results."""
-        matched_jobs = session.get('matched_jobs', [])
+        cache_key = f'matched_jobs_user_{current_user.id}'
+        matched_jobs = cache.get(cache_key) or []
         if not matched_jobs:
             flash(_('No hay resultados. Realiza una nueva búsqueda.'), 'warning')
             return redirect(url_for('index'))
@@ -627,10 +729,17 @@ def _register_routes(app):
     # Profile Management
     # =========================================================================
 
+    @app.route('/profile/edit', methods=['GET'])
+    @login_required
+    def edit_profile():
+        """Render the profile editor page."""
+        return render_template('profile_edit.html', user=current_user)
+
     @app.route('/profile/update', methods=['POST'])
     @login_required
     def update_profile():
-        """Update user profile (photo and skills)."""
+        """Update user profile - all fields."""
+        # Profile picture
         if 'profile_picture' in request.files:
             file = request.files['profile_picture']
             if file and file.filename:
@@ -640,12 +749,75 @@ def _register_routes(app):
                     filename = secure_filename(
                         f"user_{current_user.id}.{ext}"
                     )
-                    filepath = os.path.join(
-                        'static', 'profiles', filename
-                    )
+                    profiles_dir = os.path.join('static', 'profiles')
+                    os.makedirs(profiles_dir, exist_ok=True)
+                    filepath = os.path.join(profiles_dir, filename)
                     file.save(filepath)
                     current_user.profile_picture = f'profiles/{filename}'
 
+        # CV upload (saved permanently, not deleted)
+        if 'cv_file' in request.files:
+            cv_file = request.files['cv_file']
+            if cv_file and cv_file.filename:
+                allowed_cv = {'pdf', 'docx'}
+                ext = cv_file.filename.rsplit('.', 1)[-1].lower()
+                if ext in allowed_cv:
+                    cv_filename = secure_filename(
+                        f"cv_user_{current_user.id}.{ext}"
+                    )
+                    cvs_dir = os.path.join('static', 'profiles', 'cv')
+                    os.makedirs(cvs_dir, exist_ok=True)
+                    cv_filepath = os.path.join(cvs_dir, cv_filename)
+                    cv_file.save(cv_filepath)
+                    current_user.cv_url = f'profiles/cv/{cv_filename}'
+
+        # Text fields - basic info
+        if 'full_name' in request.form:
+            full_name = request.form.get('full_name', '').strip()
+            if full_name:
+                current_user.full_name = full_name
+
+        # Username (must be unique, URL-safe)
+        if 'username' in request.form:
+            new_username = request.form.get('username', '').strip().lower()
+            if new_username and new_username != current_user.username:
+                import re as _re
+                slug = _re.sub(r'[^a-z0-9-]', '', new_username)[:50]
+                if slug and slug != current_user.username:
+                    existing = User.query.filter(
+                        User.username == slug,
+                        User.id != current_user.id
+                    ).first()
+                    if existing:
+                        flash(_('Ese nombre de usuario ya está en uso.'), 'warning')
+                    else:
+                        current_user.username = slug
+
+        # Showcase fields
+        for field in [
+            'headline', 'bio', 'location',
+            'linkedin_url', 'github_url', 'portfolio_url', 'twitter_url',
+            'preferred_job_type', 'expected_salary',
+            'company_name', 'company_website'
+        ]:
+            if field in request.form:
+                value = request.form.get(field, '').strip()
+                setattr(current_user, field, value)
+
+        # Numeric / boolean
+        if 'years_experience' in request.form:
+            try:
+                current_user.years_experience = int(
+                    request.form.get('years_experience', 0) or 0
+                )
+            except ValueError:
+                current_user.years_experience = 0
+
+        current_user.open_to_work = request.form.get('open_to_work') == 'on'
+        current_user.is_public = request.form.get('is_public') == 'on'
+        current_user.preferred_remote = request.form.get('preferred_remote') == 'on'
+
+        # Skills
         skills = request.form.get('skills', '').strip()
         if skills:
             cleaned_skills = ', '.join([
@@ -653,9 +825,59 @@ def _register_routes(app):
             ])
             current_user.skills = cleaned_skills
 
-        db.session.commit()
-        flash(_('Perfil actualizado correctamente.'), 'success')
-        return redirect(url_for('candidate_dashboard'))
+        try:
+            db.session.commit()
+            flash(_('Perfil actualizado correctamente.'), 'success')
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Profile update error: {e}")
+            flash(_('Error al actualizar el perfil.'), 'danger')
+
+        # Redirect back to profile editor unless coming from elsewhere
+        next_page = request.form.get('next')
+        if next_page == 'public' and current_user.username:
+            return redirect(url_for('public_profile', username=current_user.username))
+        return redirect(url_for('edit_profile'))
+
+    @app.route('/u/<username>')
+    def public_profile(username):
+        """Public profile showcase - viewable without login.
+
+        This is the candidate's portfolio page - their public 'storefront'
+        for recruiters and the world. Inspired by linkedin/github profiles.
+        """
+        user = User.query.filter_by(username=username).first_or_404()
+
+        # Privacy check: profile must be public OR viewer must be the owner
+        is_owner = current_user.is_authenticated and current_user.id == user.id
+        is_admin_viewer = (
+            current_user.is_authenticated and current_user.user_type == 'admin'
+        )
+        if not user.is_public and not (is_owner or is_admin_viewer):
+            abort(404)
+
+        # If candidate, show their public job postings (none) + showcase
+        # If employer, show their company info + active jobs
+        public_jobs = []
+        if user.user_type == 'employer':
+            public_jobs = Job.query.filter_by(
+                employer_id=user.id, is_active=True
+            ).order_by(Job.created_at.desc()).all()
+
+        return render_template(
+            'public_profile.html',
+            user=user,
+            is_owner=is_owner,
+            public_jobs=public_jobs,
+        )
+
+    @app.route('/profile')
+    @login_required
+    def my_profile():
+        """Redirect to current user's public profile."""
+        if not current_user.username:
+            return redirect(url_for('edit_profile'))
+        return redirect(url_for('public_profile', username=current_user.username))
 
     # =========================================================================
     # Application Tracking
