@@ -106,9 +106,23 @@ class User(UserMixin, db.Model):
 
 
 class Application(db.Model):
-    """Track user job applications."""
+    """Track user job applications with pipeline states.
+
+    Pipeline states (inspired by career-ops & job-ops):
+    - saved: bookmarked for later
+    - applied: application submitted
+    - contacted: recruiter reached out
+    - interviewing: in interview process
+    - offer: received an offer
+    - accepted: accepted the offer
+    - rejected: rejected by company or user declined
+    """
 
     __tablename__ = 'applications'
+
+    PIPELINE_STATES = [
+        'saved', 'applied', 'contacted', 'interviewing', 'offer', 'accepted', 'rejected'
+    ]
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(
@@ -117,12 +131,50 @@ class Application(db.Model):
     job_title = db.Column(db.String(200), nullable=False)
     company = db.Column(db.String(120), nullable=False)
     job_url = db.Column(db.String(500), default='')
-    status = db.Column(db.String(20), default='applied')
+    status = db.Column(db.String(20), default='saved')
+    match_score = db.Column(db.Integer, default=0)  # 0-100
+    match_grade = db.Column(db.String(2), default='')  # A-F
+    location = db.Column(db.String(200), default='')
+    salary_range = db.Column(db.String(100), default='')
+    job_type = db.Column(db.String(50), default='')
+    platform = db.Column(db.String(50), default='')
     application_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(
+        db.DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
+    )
     notes = db.Column(db.Text, default='')
 
+    @property
+    def status_color(self):
+        """Return CSS color class for the current status."""
+        colors = {
+            'saved': 'gray',
+            'applied': 'blue',
+            'contacted': 'purple',
+            'interviewing': 'yellow',
+            'offer': 'green',
+            'accepted': 'emerald',
+            'rejected': 'red',
+        }
+        return colors.get(self.status, 'gray')
+
+    @property
+    def status_icon(self):
+        """Return FontAwesome icon for the current status."""
+        icons = {
+            'saved': 'fa-bookmark',
+            'applied': 'fa-paper-plane',
+            'contacted': 'fa-envelope',
+            'interviewing': 'fa-comments',
+            'offer': 'fa-trophy',
+            'accepted': 'fa-check-circle',
+            'rejected': 'fa-times-circle',
+        }
+        return icons.get(self.status, 'fa-circle')
+
     def __repr__(self):
-        return f'<Application {self.job_title} @ {self.company}>'
+        return f'<Application {self.job_title} @ {self.company} [{self.status}]>'
 
 
 class Job(db.Model):
@@ -244,6 +296,8 @@ def _migrate_database():
     from sqlalchemy import inspect, text
     try:
         inspector = inspect(db.engine)
+
+        # Users table migrations
         if 'users' in inspector.get_table_names():
             columns = [col['name'] for col in inspector.get_columns('users')]
             if 'is_active_user' not in columns:
@@ -252,7 +306,30 @@ def _migrate_database():
                         'ALTER TABLE users ADD COLUMN is_active_user BOOLEAN DEFAULT TRUE'
                     ))
                     conn.commit()
-                logger.info("Migration: Added is_active_user column to users table")
+                logger.info("Migration: Added is_active_user column")
+
+        # Applications table migrations
+        if 'applications' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('applications')]
+            migrations = {
+                'match_score': 'ALTER TABLE applications ADD COLUMN match_score INTEGER DEFAULT 0',
+                'match_grade': "ALTER TABLE applications ADD COLUMN match_grade VARCHAR(2) DEFAULT ''",
+                'location': "ALTER TABLE applications ADD COLUMN location VARCHAR(200) DEFAULT ''",
+                'salary_range': "ALTER TABLE applications ADD COLUMN salary_range VARCHAR(100) DEFAULT ''",
+                'job_type': "ALTER TABLE applications ADD COLUMN job_type VARCHAR(50) DEFAULT ''",
+                'platform': "ALTER TABLE applications ADD COLUMN platform VARCHAR(50) DEFAULT ''",
+                'updated_at': 'ALTER TABLE applications ADD COLUMN updated_at TIMESTAMP',
+            }
+            with db.engine.connect() as conn:
+                for col_name, sql in migrations.items():
+                    if col_name not in columns:
+                        try:
+                            conn.execute(text(sql))
+                            logger.info(f"Migration: Added {col_name} to applications")
+                        except Exception:
+                            pass  # Column might already exist
+                conn.commit()
+
     except Exception as e:
         logger.warning(f"Migration check skipped: {e}")
 
@@ -410,12 +487,12 @@ def _register_routes(app):
     @app.route('/candidate/dashboard')
     @login_required
     def candidate_dashboard():
-        """Candidate dashboard with profile management."""
+        """Candidate dashboard with pipeline overview."""
         if current_user.user_type not in ('candidate', 'admin'):
             abort(403)
         recent_applications = current_user.applications.order_by(
             Application.application_date.desc()
-        ).limit(5).all()
+        ).all()
         return render_template(
             'candidate_dashboard.html',
             recent_applications=recent_applications
@@ -587,11 +664,11 @@ def _register_routes(app):
     @app.route('/apply_job', methods=['POST'])
     @login_required
     def apply_job():
-        """Apply to a job (save application)."""
-        if current_user.user_type != 'candidate':
+        """Save a job to pipeline (bookmark/apply)."""
+        if current_user.user_type not in ('candidate', 'admin'):
             return jsonify({
                 'status': 'error',
-                'message': _('Solo los candidatos pueden postular.')
+                'message': _('Solo los candidatos pueden guardar trabajos.')
             }), 403
 
         data = request.get_json()
@@ -610,22 +687,71 @@ def _register_routes(app):
         if existing:
             return jsonify({
                 'status': 'error',
-                'message': _('Ya aplicaste a este trabajo.')
+                'message': _('Este trabajo ya está en tu pipeline.')
             }), 409
 
         new_application = Application(
             user_id=current_user.id,
             job_title=data['title'],
             company=data['company'],
-            job_url=data.get('url', '')
+            job_url=data.get('url', ''),
+            status=data.get('status', 'saved'),
+            match_score=int(data.get('match_score', 0) or 0),
+            match_grade=data.get('match_grade', ''),
+            location=data.get('location', ''),
+            salary_range=data.get('salary_range', ''),
+            job_type=data.get('job_type', ''),
+            platform=data.get('platform', ''),
         )
         db.session.add(new_application)
         db.session.commit()
 
         return jsonify({
             'status': 'success',
-            'message': _('Postulación registrada exitosamente.')
+            'message': _('Trabajo guardado en tu pipeline.')
         })
+
+    @app.route('/application/<int:app_id>/status', methods=['POST'])
+    @login_required
+    def update_application_status(app_id):
+        """Update application pipeline status."""
+        application = Application.query.get_or_404(app_id)
+        if application.user_id != current_user.id and current_user.user_type != 'admin':
+            abort(403)
+
+        data = request.get_json() if request.is_json else None
+        new_status = (data.get('status') if data else request.form.get('status', '')).strip()
+
+        if new_status not in Application.PIPELINE_STATES:
+            if request.is_json:
+                return jsonify({'status': 'error', 'message': _('Estado inválido.')}), 400
+            flash(_('Estado inválido.'), 'danger')
+            return redirect(url_for('applications'))
+
+        application.status = new_status
+        notes = (data.get('notes') if data else request.form.get('notes', '')) or ''
+        if notes:
+            application.notes = notes
+
+        db.session.commit()
+
+        if request.is_json:
+            return jsonify({'status': 'success', 'message': _('Estado actualizado.')})
+        flash(_('Estado actualizado.'), 'success')
+        return redirect(url_for('applications'))
+
+    @app.route('/application/<int:app_id>/delete', methods=['POST'])
+    @login_required
+    def delete_application(app_id):
+        """Delete an application from pipeline."""
+        application = Application.query.get_or_404(app_id)
+        if application.user_id != current_user.id and current_user.user_type != 'admin':
+            abort(403)
+
+        db.session.delete(application)
+        db.session.commit()
+        flash(_('Eliminado de tu pipeline.'), 'success')
+        return redirect(url_for('applications'))
 
     @app.route('/applications')
     @login_required

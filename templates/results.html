@@ -27,7 +27,16 @@
                 <div class="flex-1">
                     <div class="flex items-start justify-between gap-2">
                         <h2 class="text-lg font-bold text-gray-800 leading-tight">{{ job.title }}</h2>
-                        {% if job.match_score is defined and job.match_score %}
+                        {% if job.grade is defined and job.grade %}
+                        <span class="shrink-0 text-xs px-2.5 py-1 rounded-full font-bold
+                            {% if job.grade == 'A' %}bg-green-100 text-green-700 border border-green-200
+                            {% elif job.grade == 'B' %}bg-blue-100 text-blue-700 border border-blue-200
+                            {% elif job.grade == 'C' %}bg-yellow-100 text-yellow-700 border border-yellow-200
+                            {% elif job.grade == 'D' %}bg-orange-100 text-orange-700 border border-orange-200
+                            {% else %}bg-gray-100 text-gray-600 border border-gray-200{% endif %}">
+                            {{ job.grade }} · {{ job.match_score }}%
+                        </span>
+                        {% elif job.match_score is defined and job.match_score %}
                         <span class="shrink-0 text-xs px-2 py-1 rounded-full font-medium
                             {% if job.relevance == 'high' %}bg-green-100 text-green-700
                             {% elif job.relevance == 'medium' %}bg-yellow-100 text-yellow-700
@@ -106,7 +115,7 @@
                     </a>
                     {% endif %}
                     {% if current_user.user_type == 'candidate' %}
-                    <button onclick="saveJob('{{ job.title|e }}', '{{ job.company|e }}', '{{ job.url|e }}')"
+                    <button onclick="saveJob(this, '{{ job.title|e }}', '{{ job.company|e }}', '{{ job.url|e }}', '{{ job.match_score|default(0) }}', '{{ job.grade|default("") }}', '{{ job.location|default("")|e }}', '{{ job.salary_range|default("")|e }}', '{{ job.job_type|default("")|e }}', '{{ job.platform|default("")|e }}')"
                             class="bg-gray-100 text-gray-700 px-5 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap hover:bg-gray-200 transition">
                         <i class="fas fa-bookmark"></i>{{ _('Guardar') }}
                     </button>
@@ -135,21 +144,40 @@
 </style>
 
 <script>
-    function saveJob(title, company, url) {
+    function saveJob(btn, title, company, url, matchScore, matchGrade, location, salaryRange, jobType, platform) {
         fetch('{{ url_for("apply_job") }}', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({title: title, company: company, url: url})
+            body: JSON.stringify({
+                title: title,
+                company: company,
+                url: url,
+                status: 'saved',
+                match_score: matchScore || 0,
+                match_grade: matchGrade || '',
+                location: location || '',
+                salary_range: salaryRange || '',
+                job_type: jobType || '',
+                platform: platform || ''
+            })
         })
         .then(r => r.json())
         .then(data => {
             if (data.status === 'success') {
-                alert('{{ _("Trabajo guardado en tus postulaciones") }}');
+                btn.innerHTML = '<i class="fas fa-check"></i> {{ _("Guardado") }}';
+                btn.classList.remove('bg-gray-100', 'text-gray-700');
+                btn.classList.add('bg-green-100', 'text-green-700');
+                btn.disabled = true;
             } else {
-                alert(data.message || '{{ _("Error al guardar") }}');
+                btn.innerHTML = '<i class="fas fa-exclamation"></i> ' + (data.message || '{{ _("Ya guardado") }}');
+                btn.classList.remove('bg-gray-100', 'text-gray-700');
+                btn.classList.add('bg-yellow-100', 'text-yellow-700');
             }
         })
-        .catch(() => alert('{{ _("Error de conexión") }}'));
+        .catch(() => {
+            btn.innerHTML = '<i class="fas fa-times"></i> Error';
+            btn.classList.add('bg-red-100', 'text-red-700');
+        });
     }
 </script>
 {% endblock %}

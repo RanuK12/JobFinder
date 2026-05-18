@@ -1,8 +1,15 @@
 """
-AI Job Matching Module
+AI Job Matching Module - Intelligent Scoring System
 
-Matches CV content against job listings using keyword extraction,
-TF-IDF-like scoring, and skill-based relevance ranking.
+Inspired by career-ops (A-F grading) and job-ops (0-100 scoring).
+Evaluates jobs against CV using weighted dimensions:
+- Technical Skills Match (35%)
+- Experience Level Alignment (20%)
+- Role Category Fit (20%)
+- Description Relevance (15%)
+- Location/Remote Compatibility (10%)
+
+Returns scored and graded results with detailed match breakdown.
 """
 
 import re
@@ -13,84 +20,55 @@ from typing import Dict, List, Optional, Set, Tuple
 logger = logging.getLogger(__name__)
 
 # =============================================================================
-# Technical Skills Database
+# Skills Database
 # =============================================================================
 
 TECHNICAL_SKILLS = {
-    # Programming Languages
     'python', 'java', 'javascript', 'typescript', 'c++', 'c#', 'go', 'rust',
-    'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'perl',
-    'objective-c', 'dart', 'lua', 'haskell', 'elixir', 'clojure',
-
-    # Frontend
-    'react', 'angular', 'vue', 'svelte', 'next.js', 'nuxt', 'gatsby',
+    'ruby', 'php', 'swift', 'kotlin', 'scala', 'r', 'matlab', 'perl', 'dart',
+    'react', 'angular', 'vue', 'svelte', 'nextjs', 'nuxt', 'gatsby',
     'html', 'css', 'sass', 'less', 'tailwind', 'bootstrap', 'material-ui',
     'webpack', 'vite', 'babel', 'jquery', 'redux', 'mobx', 'zustand',
-
-    # Backend
     'node', 'express', 'django', 'flask', 'fastapi', 'spring', 'rails',
-    'laravel', 'asp.net', '.net', 'gin', 'fiber', 'nestjs', 'koa',
+    'laravel', 'asp.net', '.net', 'nestjs', 'koa', 'gin', 'fiber',
     'graphql', 'rest', 'grpc', 'websocket', 'microservices',
-
-    # Database
     'sql', 'mysql', 'postgresql', 'mongodb', 'redis', 'elasticsearch',
-    'dynamodb', 'cassandra', 'neo4j', 'sqlite', 'oracle', 'mariadb',
-    'firebase', 'supabase', 'prisma', 'sequelize', 'mongoose',
-
-    # DevOps & Cloud
+    'dynamodb', 'cassandra', 'neo4j', 'sqlite', 'oracle', 'firebase',
+    'supabase', 'prisma', 'sequelize', 'mongoose',
     'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'terraform', 'ansible',
-    'jenkins', 'github actions', 'gitlab ci', 'circleci', 'nginx', 'apache',
-    'linux', 'bash', 'powershell', 'ci/cd', 'devops', 'sre',
-
-    # Data & AI/ML
+    'jenkins', 'github actions', 'gitlab ci', 'circleci', 'nginx',
+    'linux', 'bash', 'powershell', 'devops', 'sre',
     'tensorflow', 'pytorch', 'scikit-learn', 'pandas', 'numpy', 'spark',
     'hadoop', 'kafka', 'airflow', 'dbt', 'tableau', 'power bi',
     'machine learning', 'deep learning', 'nlp', 'computer vision',
     'data science', 'data engineering', 'etl', 'big data',
-
-    # Mobile
-    'react native', 'flutter', 'ios', 'android', 'swiftui', 'jetpack compose',
-    'xamarin', 'ionic', 'cordova', 'expo',
-
-    # Testing
+    'react native', 'flutter', 'ios', 'android', 'swiftui',
     'jest', 'pytest', 'selenium', 'cypress', 'playwright', 'junit',
-    'mocha', 'chai', 'vitest', 'testing', 'tdd', 'bdd', 'qa',
-
-    # Security
-    'oauth', 'jwt', 'ssl', 'tls', 'encryption', 'authentication',
-    'authorization', 'cybersecurity', 'penetration testing', 'owasp',
-
-    # Project Management & Methodologies
-    'agile', 'scrum', 'kanban', 'jira', 'confluence', 'trello',
-    'git', 'github', 'gitlab', 'bitbucket',
-
-    # Other
-    'blockchain', 'web3', 'solidity', 'ethereum',
-    'iot', 'embedded', 'arduino', 'raspberry pi',
+    'oauth', 'jwt', 'ssl', 'encryption', 'cybersecurity',
+    'agile', 'scrum', 'kanban', 'jira', 'git', 'github', 'gitlab',
     'figma', 'sketch', 'adobe xd', 'ux', 'ui',
+    'blockchain', 'web3', 'solidity', 'ethereum',
+    'salesforce', 'sap', 'erp', 'crm',
 }
 
-# Soft skills and professional keywords
-PROFESSIONAL_SKILLS = {
-    'leadership', 'management', 'communication', 'teamwork', 'problem-solving',
-    'analytical', 'creative', 'strategic', 'planning', 'mentoring',
-    'presentation', 'negotiation', 'collaboration', 'adaptability',
-    'liderazgo', 'gestión', 'comunicación', 'trabajo en equipo',
-    'resolución de problemas', 'analítico', 'creativo', 'estratégico',
-    'planificación', 'mentoría', 'presentación', 'negociación',
-    'colaboración', 'adaptabilidad',
+EXPERIENCE_INDICATORS = {
+    'senior': 4, 'sr': 4, 'lead': 5, 'principal': 6, 'staff': 5,
+    'architect': 6, 'director': 7, 'vp': 8, 'head': 7, 'chief': 9,
+    'manager': 5, 'mid': 3, 'junior': 1, 'jr': 1, 'entry': 1,
+    'intern': 0, 'associate': 2, 'experienced': 3,
 }
 
-# Job role keywords for categorization
 ROLE_CATEGORIES = {
-    'frontend': {'frontend', 'front-end', 'react', 'angular', 'vue', 'css', 'html', 'ui'},
+    'frontend': {'frontend', 'front-end', 'react', 'angular', 'vue', 'css', 'html', 'ui developer'},
     'backend': {'backend', 'back-end', 'api', 'server', 'database', 'microservices'},
     'fullstack': {'fullstack', 'full-stack', 'full stack'},
-    'devops': {'devops', 'sre', 'infrastructure', 'cloud', 'kubernetes', 'docker'},
-    'data': {'data', 'analytics', 'machine learning', 'ai', 'ml', 'scientist'},
+    'devops': {'devops', 'sre', 'infrastructure', 'cloud', 'kubernetes', 'docker', 'platform'},
+    'data': {'data', 'analytics', 'machine learning', 'ai', 'ml', 'scientist', 'data engineer'},
     'mobile': {'mobile', 'ios', 'android', 'react native', 'flutter'},
     'security': {'security', 'cybersecurity', 'infosec', 'penetration'},
-    'design': {'design', 'ux', 'ui', 'figma', 'user experience'},
+    'design': {'design', 'ux', 'ui', 'figma', 'user experience', 'product design'},
+    'management': {'manager', 'lead', 'director', 'head of', 'vp', 'chief'},
+    'qa': {'qa', 'quality', 'testing', 'test engineer', 'automation'},
 }
 
 
@@ -100,300 +78,393 @@ ROLE_CATEGORIES = {
 
 def match_jobs(cv_text: str, jobs: List[Dict]) -> List[Dict]:
     """
-    Match and rank jobs based on CV content.
+    Match and rank jobs against CV using multi-dimensional scoring.
 
-    Uses keyword extraction and scoring to rank jobs by relevance.
+    Scoring dimensions (total 100 points):
+    - Technical Skills: 35 pts
+    - Experience Level: 20 pts
+    - Role Alignment: 20 pts
+    - Description Relevance: 15 pts
+    - Location Fit: 10 pts
 
     Args:
-        cv_text: Extracted text from the user's CV.
-        jobs: List of job dictionaries from the scraper.
+        cv_text: Extracted text from user's CV.
+        jobs: List of job dictionaries from scraper.
 
     Returns:
-        List of matched jobs sorted by relevance score, with match details.
+        Sorted list of jobs with scores, grades, and match details.
     """
     if not cv_text or not jobs:
         return []
 
     try:
-        # Extract CV keywords and skills
-        cv_keywords = extract_keywords(cv_text)
-        cv_skills = extract_skills(cv_text)
-        cv_roles = _identify_roles(cv_text)
-
+        # Analyze CV
+        cv_profile = _analyze_cv(cv_text)
         logger.info(
-            f"CV Analysis - Skills: {len(cv_skills)}, "
-            f"Keywords: {len(cv_keywords)}, Roles: {cv_roles}"
+            f"CV Profile - Skills: {len(cv_profile['skills'])}, "
+            f"Level: {cv_profile['experience_level']}, "
+            f"Roles: {cv_profile['roles']}"
         )
 
         matched_jobs = []
-
         for job in jobs:
-            score, match_details = _score_job(
-                job, cv_skills, cv_keywords, cv_roles
-            )
-
-            if score > 0:
+            score_result = _score_job(job, cv_profile)
+            if score_result['total_score'] > 0:
                 matched_jobs.append({
                     **job,
-                    'match_score': round(score, 2),
-                    'keywords_matched': match_details.get('matched_skills', []),
-                    'match_reasons': match_details.get('reasons', []),
-                    'relevance': _get_relevance_label(score)
+                    'match_score': score_result['total_score'],
+                    'grade': score_result['grade'],
+                    'grade_color': score_result['grade_color'],
+                    'relevance': score_result['relevance'],
+                    'breakdown': score_result['breakdown'],
+                    'matched_skills': score_result['matched_skills'],
+                    'match_reasons': score_result['reasons'],
+                    'experience_fit': score_result['experience_fit'],
                 })
 
-        # Sort by match score (highest first)
+        # Sort by score descending
         matched_jobs.sort(key=lambda x: x['match_score'], reverse=True)
-
-        logger.info(f"Matched {len(matched_jobs)} jobs out of {len(jobs)} total")
+        logger.info(f"Matched {len(matched_jobs)}/{len(jobs)} jobs")
         return matched_jobs
 
     except Exception as e:
         logger.error(f"Error in job matching: {str(e)}")
-        return jobs  # Return unranked jobs as fallback
+        # Return jobs unranked as fallback
+        for job in jobs:
+            job['match_score'] = 0
+            job['grade'] = '-'
+            job['grade_color'] = 'gray'
+            job['relevance'] = 'unknown'
+        return jobs
 
 
-def _score_job(
-    job: Dict,
-    cv_skills: Set[str],
-    cv_keywords: List[str],
-    cv_roles: Set[str]
-) -> Tuple[float, Dict]:
+def _analyze_cv(cv_text: str) -> Dict:
+    """Extract a structured profile from CV text."""
+    cv_lower = cv_text.lower()
+
+    return {
+        'skills': _extract_skills(cv_lower),
+        'keywords': _extract_keywords(cv_lower),
+        'experience_level': _detect_experience_level(cv_lower),
+        'years_experience': _estimate_years(cv_lower),
+        'roles': _identify_roles(cv_lower),
+        'languages': _detect_languages_spoken(cv_lower),
+        'education_level': _detect_education(cv_lower),
+    }
+
+
+def _score_job(job: Dict, cv_profile: Dict) -> Dict:
     """
-    Calculate a relevance score for a job.
+    Calculate multi-dimensional score for a job.
 
-    Scoring breakdown:
-    - Skill matches: up to 60 points
-    - Role alignment: up to 20 points
-    - Keyword overlap: up to 20 points
-
-    Args:
-        job: Job dictionary.
-        cv_skills: Set of skills extracted from CV.
-        cv_keywords: List of keywords from CV.
-        cv_roles: Set of identified role categories.
-
-    Returns:
-        Tuple of (score, match_details_dict).
+    Returns dict with total_score, grade, breakdown, reasons, etc.
     """
-    score = 0.0
-    matched_skills = []
-    reasons = []
-
-    # Build job text from available fields
     job_text = ' '.join([
         job.get('title', ''),
         job.get('company', ''),
         job.get('location', ''),
         job.get('description', ''),
-        ' '.join(job.get('tags', []))
+        ' '.join(job.get('tags', [])),
+        job.get('job_type', ''),
     ]).lower()
 
-    # 1. Skill matching (60% weight)
-    job_skills = extract_skills(job_text)
-    common_skills = cv_skills.intersection(job_skills)
+    # Dimension 1: Technical Skills (35 pts)
+    skills_score, matched_skills = _score_skills(cv_profile['skills'], job_text)
 
-    if common_skills:
-        skill_score = min(len(common_skills) / max(len(cv_skills), 1) * 60, 60)
-        score += skill_score
-        matched_skills = list(common_skills)[:10]  # Top 10 matches
-        reasons.append(
-            f"Habilidades coincidentes: {', '.join(matched_skills[:5])}"
-        )
+    # Dimension 2: Experience Level (20 pts)
+    exp_score, exp_fit = _score_experience(cv_profile['experience_level'], job_text)
 
-    # 2. Role alignment (20% weight)
-    job_roles = _identify_roles(job_text)
-    common_roles = cv_roles.intersection(job_roles)
+    # Dimension 3: Role Alignment (20 pts)
+    role_score, role_match = _score_role_alignment(cv_profile['roles'], job_text)
 
-    if common_roles:
-        role_score = min(len(common_roles) / max(len(cv_roles), 1) * 20, 20)
-        score += role_score
-        reasons.append(
-            f"Rol compatible: {', '.join(common_roles)}"
-        )
+    # Dimension 4: Description Relevance (15 pts)
+    desc_score = _score_description_relevance(cv_profile['keywords'], job_text)
 
-    # 3. Keyword overlap (20% weight)
-    cv_keyword_set = set(cv_keywords)
-    job_words = set(re.findall(r'\b\w+\b', job_text))
-    keyword_overlap = cv_keyword_set.intersection(job_words)
+    # Dimension 5: Location/Remote (10 pts)
+    location_score = _score_location(job)
 
-    if keyword_overlap:
-        keyword_score = min(
-            len(keyword_overlap) / max(len(cv_keyword_set), 1) * 20, 20
-        )
-        score += keyword_score
+    # Total
+    total = round(skills_score + exp_score + role_score + desc_score + location_score, 1)
+    total = min(total, 100)
 
-    match_details = {
-        'matched_skills': matched_skills,
+    # Grade assignment
+    grade, grade_color = _assign_grade(total)
+
+    # Build reasons
+    reasons = []
+    if matched_skills:
+        reasons.append(f"Skills: {', '.join(list(matched_skills)[:5])}")
+    if role_match:
+        reasons.append(f"Role fit: {', '.join(role_match)}")
+    if exp_fit:
+        reasons.append(exp_fit)
+
+    return {
+        'total_score': total,
+        'grade': grade,
+        'grade_color': grade_color,
+        'relevance': _get_relevance(total),
+        'breakdown': {
+            'skills': round(skills_score, 1),
+            'experience': round(exp_score, 1),
+            'role': round(role_score, 1),
+            'description': round(desc_score, 1),
+            'location': round(location_score, 1),
+        },
+        'matched_skills': list(matched_skills)[:10],
         'reasons': reasons,
-        'skill_count': len(common_skills),
-        'role_alignment': list(common_roles)
+        'experience_fit': exp_fit,
     }
-
-    return score, match_details
 
 
 # =============================================================================
-# Keyword & Skill Extraction
+# Scoring Functions
 # =============================================================================
 
-def extract_keywords(text: str) -> List[str]:
-    """
-    Extract relevant keywords from text.
+def _score_skills(cv_skills: Set[str], job_text: str) -> Tuple[float, Set[str]]:
+    """Score technical skills match (max 35 pts)."""
+    job_skills = _extract_skills(job_text)
+    if not cv_skills or not job_skills:
+        # If job has no specific skills listed, give partial credit
+        if not job_skills and cv_skills:
+            return 15.0, set()
+        return 0.0, set()
 
-    Filters out common stop words and short words,
-    returns the most frequently occurring terms.
+    common = cv_skills.intersection(job_skills)
+    if not common:
+        return 0.0, set()
 
-    Args:
-        text: Input text to extract keywords from.
+    # Score based on coverage of job requirements
+    coverage = len(common) / len(job_skills)
+    score = min(coverage * 35, 35)
 
-    Returns:
-        List of top keywords (up to 20).
-    """
-    if not text or not isinstance(text, str):
-        return []
+    # Bonus for having many matching skills
+    if len(common) >= 5:
+        score = min(score + 5, 35)
 
-    text = text.lower()
+    return score, common
 
-    # Combined stop words (English + Spanish)
-    stop_words = {
-        # English
-        'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
-        'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
-        'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her',
-        'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there',
-        'their', 'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get',
-        'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time', 'no',
-        'just', 'him', 'know', 'take', 'people', 'into', 'year', 'your',
-        'good', 'some', 'could', 'them', 'see', 'other', 'than', 'then',
-        'now', 'look', 'only', 'come', 'its', 'over', 'think', 'also',
-        'back', 'after', 'use', 'two', 'how', 'our', 'work', 'first',
-        'well', 'way', 'even', 'new', 'want', 'because', 'any', 'these',
-        'give', 'day', 'most', 'us', 'was', 'were', 'been', 'has', 'had',
-        'did', 'does', 'are', 'is', 'am', 'being',
-        # Spanish
-        'el', 'la', 'de', 'en', 'y', 'que', 'es', 'un', 'una', 'los',
-        'las', 'del', 'con', 'por', 'para', 'se', 'al', 'lo', 'como',
-        'más', 'pero', 'sus', 'le', 'ya', 'o', 'fue', 'este', 'ha',
-        'si', 'porque', 'esta', 'son', 'entre', 'cuando', 'muy', 'sin',
-        'sobre', 'también', 'me', 'hasta', 'hay', 'donde', 'quien',
-        'desde', 'todo', 'nos', 'durante', 'todos', 'uno', 'les', 'ni',
-        'contra', 'otros', 'ese', 'eso', 'ante', 'ellos', 'e', 'esto',
-        'mi', 'antes', 'algunos', 'qué', 'unos', 'yo', 'otro', 'otras',
+
+def _score_experience(cv_level: int, job_text: str) -> Tuple[float, str]:
+    """Score experience level alignment (max 20 pts)."""
+    job_level = _detect_experience_level(job_text)
+
+    if job_level == 0 and cv_level == 0:
+        return 15.0, "Entry level match"
+
+    if job_level == 0:
+        return 10.0, ""  # Job doesn't specify level
+
+    diff = abs(cv_level - job_level)
+    if diff == 0:
+        return 20.0, "Perfect level match"
+    elif diff == 1:
+        if cv_level > job_level:
+            return 16.0, "Slightly overqualified"
+        return 14.0, "Slight stretch role"
+    elif diff == 2:
+        if cv_level > job_level:
+            return 10.0, "Overqualified"
+        return 8.0, "Growth opportunity"
+    else:
+        if cv_level > job_level:
+            return 5.0, "Significantly overqualified"
+        return 3.0, "Significant experience gap"
+
+
+def _score_role_alignment(cv_roles: Set[str], job_text: str) -> Tuple[float, List[str]]:
+    """Score role category alignment (max 20 pts)."""
+    job_roles = _identify_roles(job_text)
+
+    if not cv_roles or not job_roles:
+        return 10.0, []  # Neutral if can't determine
+
+    common = cv_roles.intersection(job_roles)
+    if common:
+        score = min(len(common) / max(len(job_roles), 1) * 20, 20)
+        return max(score, 12.0), list(common)
+
+    # Adjacent roles get partial credit
+    adjacent = {
+        'frontend': {'fullstack', 'design'},
+        'backend': {'fullstack', 'devops', 'data'},
+        'fullstack': {'frontend', 'backend'},
+        'devops': {'backend', 'security'},
+        'data': {'backend', 'devops'},
+        'mobile': {'frontend', 'fullstack'},
     }
+    for cv_role in cv_roles:
+        adj = adjacent.get(cv_role, set())
+        if adj.intersection(job_roles):
+            return 8.0, [f"{cv_role} (adjacent)"]
 
-    # Extract words
-    words = re.findall(r'\b[a-zA-ZáéíóúüñÁÉÍÓÚÜÑ]{3,}\b', text)
-
-    # Filter and count
-    filtered_words = [w for w in words if w not in stop_words and len(w) > 2]
-    word_counts = Counter(filtered_words)
-
-    # Return top 20 keywords
-    return [word for word, _ in word_counts.most_common(20)]
+    return 3.0, []
 
 
-def extract_skills(text: str) -> Set[str]:
-    """
-    Extract technical and professional skills from text.
+def _score_description_relevance(cv_keywords: List[str], job_text: str) -> float:
+    """Score keyword overlap with job description (max 15 pts)."""
+    if not cv_keywords or not job_text:
+        return 5.0
 
-    Matches against a comprehensive skills database.
+    job_words = set(re.findall(r'\b\w+\b', job_text))
+    cv_keyword_set = set(cv_keywords[:20])
+    overlap = cv_keyword_set.intersection(job_words)
 
-    Args:
-        text: Input text to scan for skills.
+    if not overlap:
+        return 2.0
 
-    Returns:
-        Set of identified skills.
-    """
-    if not text:
-        return set()
-
-    text_lower = text.lower()
-    found_skills = set()
-
-    # Check for technical skills
-    for skill in TECHNICAL_SKILLS:
-        # Use word boundary matching for short skills
-        if len(skill) <= 3:
-            if re.search(rf'\b{re.escape(skill)}\b', text_lower):
-                found_skills.add(skill)
-        else:
-            if skill in text_lower:
-                found_skills.add(skill)
-
-    # Check for professional skills
-    for skill in PROFESSIONAL_SKILLS:
-        if skill in text_lower:
-            found_skills.add(skill)
-
-    return found_skills
+    coverage = len(overlap) / len(cv_keyword_set)
+    return min(coverage * 15, 15)
 
 
-def _identify_roles(text: str) -> Set[str]:
-    """
-    Identify job role categories present in text.
+def _score_location(job: Dict) -> float:
+    """Score location compatibility (max 10 pts)."""
+    if job.get('is_remote'):
+        return 10.0  # Remote = always accessible
 
-    Args:
-        text: Text to analyze.
-
-    Returns:
-        Set of identified role categories.
-    """
-    text_lower = text.lower()
-    identified_roles = set()
-
-    for role, keywords in ROLE_CATEGORIES.items():
-        if any(kw in text_lower for kw in keywords):
-            identified_roles.add(role)
-
-    return identified_roles
+    location = (job.get('location', '') or '').lower()
+    if 'remote' in location or 'anywhere' in location or 'worldwide' in location:
+        return 10.0
+    if 'hybrid' in location:
+        return 7.0
+    if location and location != 'not specified':
+        return 5.0  # Has a location, neutral score
+    return 5.0
 
 
-def _get_relevance_label(score: float) -> str:
-    """
-    Convert a numeric score to a human-readable relevance label.
+# =============================================================================
+# Grading System
+# =============================================================================
 
-    Args:
-        score: Numeric relevance score (0-100).
+def _assign_grade(score: float) -> Tuple[str, str]:
+    """Assign letter grade and color based on score."""
+    if score >= 80:
+        return 'A', 'green'
+    elif score >= 65:
+        return 'B', 'blue'
+    elif score >= 50:
+        return 'C', 'yellow'
+    elif score >= 35:
+        return 'D', 'orange'
+    elif score >= 20:
+        return 'E', 'red'
+    else:
+        return 'F', 'gray'
 
-    Returns:
-        Relevance label string.
-    """
-    if score >= 50:
+
+def _get_relevance(score: float) -> str:
+    """Get relevance label from score."""
+    if score >= 70:
         return 'high'
-    elif score >= 25:
+    elif score >= 45:
         return 'medium'
     else:
         return 'low'
 
 
 # =============================================================================
-# Language Detection
+# Extraction Utilities
 # =============================================================================
 
-def detect_language(text: str) -> str:
-    """
-    Simple language detection based on common word frequency.
-
-    Args:
-        text: Text to analyze.
-
-    Returns:
-        Language code ('es', 'en', or 'it').
-    """
+def _extract_skills(text: str) -> Set[str]:
+    """Extract technical skills from text."""
     if not text:
-        return 'en'
+        return set()
+    found = set()
+    for skill in TECHNICAL_SKILLS:
+        if len(skill) <= 3:
+            if re.search(rf'\b{re.escape(skill)}\b', text):
+                found.add(skill)
+        else:
+            if skill in text:
+                found.add(skill)
+    return found
 
-    text_lower = text.lower()
-    words = set(re.findall(r'\b\w+\b', text_lower))
 
-    spanish_markers = {'de', 'la', 'el', 'en', 'que', 'es', 'un', 'con', 'por', 'para'}
-    english_markers = {'the', 'and', 'of', 'in', 'to', 'is', 'for', 'on', 'with', 'at'}
-    italian_markers = {'di', 'il', 'la', 'che', 'è', 'per', 'sono', 'con', 'una', 'dal'}
+def _extract_keywords(text: str) -> List[str]:
+    """Extract significant keywords from text."""
+    if not text:
+        return []
 
-    scores = {
-        'es': len(words.intersection(spanish_markers)),
-        'en': len(words.intersection(english_markers)),
-        'it': len(words.intersection(italian_markers)),
+    stop_words = {
+        'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have', 'i',
+        'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you', 'do', 'at',
+        'this', 'but', 'his', 'by', 'from', 'they', 'we', 'say', 'her',
+        'she', 'or', 'an', 'will', 'my', 'one', 'all', 'would', 'there',
+        'their', 'what', 'so', 'up', 'out', 'if', 'about', 'who', 'get',
+        'which', 'go', 'me', 'when', 'make', 'can', 'like', 'time',
+        'work', 'experience', 'company', 'team', 'project', 'role',
+        'de', 'la', 'el', 'en', 'y', 'que', 'es', 'un', 'una', 'los',
+        'las', 'del', 'con', 'por', 'para', 'se', 'al', 'como',
     }
 
-    return max(scores, key=scores.get)
+    words = re.findall(r'\b[a-zA-Z]{4,}\b', text)
+    filtered = [w.lower() for w in words if w.lower() not in stop_words]
+    counts = Counter(filtered)
+    return [w for w, _ in counts.most_common(25)]
+
+
+def _detect_experience_level(text: str) -> int:
+    """Detect seniority level (0-9 scale)."""
+    max_level = 0
+    for indicator, level in EXPERIENCE_INDICATORS.items():
+        if re.search(rf'\b{re.escape(indicator)}\b', text):
+            max_level = max(max_level, level)
+    return max_level
+
+
+def _estimate_years(text: str) -> int:
+    """Estimate years of experience from CV text."""
+    patterns = [
+        r'(\d+)\+?\s*(?:years?|años?)\s*(?:of\s+)?(?:experience|experiencia)',
+        r'(?:experience|experiencia)\s*:?\s*(\d+)\+?\s*(?:years?|años?)',
+    ]
+    max_years = 0
+    for pattern in patterns:
+        matches = re.findall(pattern, text)
+        for m in matches:
+            try:
+                max_years = max(max_years, int(m))
+            except ValueError:
+                pass
+    return max_years
+
+
+def _identify_roles(text: str) -> Set[str]:
+    """Identify job role categories in text."""
+    found = set()
+    for role, keywords in ROLE_CATEGORIES.items():
+        if any(kw in text for kw in keywords):
+            found.add(role)
+    return found
+
+
+def _detect_languages_spoken(text: str) -> List[str]:
+    """Detect spoken languages mentioned in CV."""
+    language_patterns = {
+        'english': r'\benglish\b|\binglés\b',
+        'spanish': r'\bspanish\b|\bespañol\b|\bcastellano\b',
+        'french': r'\bfrench\b|\bfrancés\b',
+        'german': r'\bgerman\b|\balemán\b',
+        'italian': r'\bitalian\b|\bitaliano\b',
+        'portuguese': r'\bportuguese\b|\bportugués\b',
+        'chinese': r'\bchinese\b|\bmandarín\b|\bmandarin\b',
+    }
+    found = []
+    for lang, pattern in language_patterns.items():
+        if re.search(pattern, text):
+            found.append(lang)
+    return found
+
+
+def _detect_education(text: str) -> str:
+    """Detect highest education level."""
+    if re.search(r'\b(phd|doctorate|doctorado)\b', text):
+        return 'phd'
+    if re.search(r'\b(master|msc|mba|maestría|máster)\b', text):
+        return 'masters'
+    if re.search(r'\b(bachelor|bsc|licenciatura|ingenier[ío]a|grado)\b', text):
+        return 'bachelors'
+    if re.search(r'\b(bootcamp|certificate|certificado|diploma)\b', text):
+        return 'certificate'
+    return 'unknown'
