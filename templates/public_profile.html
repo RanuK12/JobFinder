@@ -5,82 +5,86 @@
 <div class="max-w-4xl mx-auto">
     {# Owner action bar #}
     {% if is_owner %}
-    <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-6 flex items-center justify-between flex-wrap gap-3">
-        <div class="flex items-center gap-2 text-sm text-purple-800">
-            <i class="fas fa-eye"></i>
-            <span>{{ _('Estás viendo tu perfil público') }}{% if not user.is_public %} ({{ _('actualmente oculto') }}){% endif %}</span>
+    <div class="bg-primary-50 border border-primary-200/60 rounded-xl p-3.5 mb-5 flex items-center justify-between flex-wrap gap-3 animate-fade-in">
+        <div class="flex items-center gap-2 text-sm text-primary-700">
+            <div class="w-6 h-6 bg-primary-100 rounded-full flex items-center justify-center">
+                <i class="fas fa-eye text-xs text-primary-500"></i>
+            </div>
+            <span class="font-medium">{{ _('Estás viendo tu perfil público') }}{% if not user.is_public %} <span class="text-amber-600 font-semibold">({{ _('actualmente oculto') }})</span>{% endif %}</span>
         </div>
         <div class="flex gap-2">
             <a href="{{ url_for('edit_profile') }}"
-               class="bg-purple-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
-                <i class="fas fa-edit"></i>{{ _('Editar perfil') }}
+               class="button-primary text-xs py-2">
+                <i class="fas fa-edit text-[10px]"></i>{{ _('Editar perfil') }}
             </a>
             <button onclick="copyProfileLink()"
-                    class="bg-white border border-purple-300 text-purple-700 text-sm px-4 py-2 rounded-lg hover:bg-purple-50 transition flex items-center gap-2">
-                <i class="fas fa-link"></i><span id="copy-text">{{ _('Copiar enlace') }}</span>
+                    class="button-secondary text-xs py-2">
+                <i class="fas fa-link text-[10px]"></i><span id="copy-text">{{ _('Copiar enlace') }}</span>
             </button>
         </div>
     </div>
     {% endif %}
 
     {# Hero card #}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-        {# Banner gradient #}
-        <div class="h-32 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
+    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden mb-6 animate-fade-in" style="animation-delay: 0.05s;">
+        {# Banner #}
+        <div class="h-36 sm:h-44 bg-gradient-to-br from-primary-500 via-primary-400 to-indigo-600 relative">
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImEiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEuNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2EpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-40"></div>
+        </div>
 
-        <div class="px-6 pb-6 -mt-16 sm:-mt-20">
+        <div class="px-6 sm:px-8 pb-6 -mt-16 sm:-mt-20 relative">
             <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                 <img src="{{ url_for('static', filename=user.profile_picture or 'profiles/default-profile.jpg') }}"
                      alt="{{ user.full_name }}"
-                     class="w-32 h-32 sm:w-40 sm:h-40 rounded-full border-4 border-white shadow-lg object-cover bg-white">
+                     class="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl border-4 border-white shadow-medium object-cover bg-white">
 
-                <div class="flex-1 mt-4 sm:mt-0 sm:pb-2">
-                    <div class="flex items-start justify-between flex-wrap gap-2">
+                <div class="flex-1 mt-3 sm:mt-0 sm:pb-2">
+                    <div class="flex items-start justify-between flex-wrap gap-3">
                         <div>
-                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                            <h1 class="text-2xl sm:text-3xl font-bold text-slate-900 tracking-tight">
                                 {{ user.full_name }}
                             </h1>
                             {% if user.headline %}
-                            <p class="text-lg text-purple-600 font-medium mt-1">{{ user.headline }}</p>
+                            <p class="text-base sm:text-lg text-primary-600 font-medium mt-1">{{ user.headline }}</p>
                             {% endif %}
-                            <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-500">
+                            <div class="flex flex-wrap items-center gap-3 mt-2.5 text-sm text-slate-500">
                                 {% if user.location %}
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-map-marker-alt"></i>{{ user.location }}
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fas fa-map-marker-alt text-slate-300 text-xs"></i>{{ user.location }}
                                 </span>
                                 {% endif %}
                                 {% if user.years_experience %}
-                                <span class="flex items-center gap-1">
-                                    <i class="fas fa-briefcase"></i>{{ user.years_experience }}+ {{ _('años de experiencia') }}
+                                <span class="flex items-center gap-1.5">
+                                    <i class="fas fa-briefcase text-slate-300 text-xs"></i>{{ user.years_experience }}+ {{ _('años de experiencia') }}
                                 </span>
                                 {% endif %}
                                 {% if user.user_type == 'candidate' and user.open_to_work %}
-                                <span class="flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
+                                <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-emerald-100">
+                                    <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span>
                                     {{ _('Abierto a oportunidades') }}
                                 </span>
                                 {% endif %}
                                 {% if user.user_type == 'employer' %}
-                                <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full text-xs font-medium">
-                                    <i class="fas fa-building mr-1"></i>{{ _('Empresa') }}
+                                <span class="inline-flex items-center gap-1.5 bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full text-xs font-semibold border border-blue-100">
+                                    <i class="fas fa-building text-[10px]"></i>{{ _('Empresa') }}
                                 </span>
                                 {% endif %}
                             </div>
                         </div>
 
-                        {# Action buttons #}
+                        {# Action buttons for visitors #}
                         {% if not is_owner %}
                         <div class="flex gap-2">
                             {% if user.linkedin_url %}
                             <a href="{{ user.linkedin_url }}" target="_blank" rel="noopener noreferrer"
-                               class="bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition flex items-center gap-2">
-                                <i class="fab fa-linkedin"></i>{{ _('Conectar') }}
+                               class="inline-flex items-center gap-2 bg-[#0A66C2] text-white text-sm px-4 py-2.5 rounded-xl hover:bg-[#004182] transition shadow-sm font-medium">
+                                <i class="fab fa-linkedin text-xs"></i>{{ _('Conectar') }}
                             </a>
                             {% endif %}
                             {% if user.cv_url %}
                             <a href="{{ url_for('static', filename=user.cv_url) }}" target="_blank"
-                               class="bg-purple-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center gap-2">
-                                <i class="fas fa-file-pdf"></i>{{ _('Descargar CV') }}
+                               class="button-primary text-sm py-2.5">
+                                <i class="fas fa-file-pdf text-xs"></i>{{ _('Descargar CV') }}
                             </a>
                             {% endif %}
                         </div>
@@ -93,32 +97,32 @@
                     <div class="flex flex-wrap gap-2 mt-4">
                         {% if user.linkedin_url %}
                         <a href="{{ user.linkedin_url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-blue-600 transition" title="LinkedIn">
-                            <i class="fab fa-linkedin text-xl"></i>
+                           class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-[#0A66C2] hover:text-white transition-all" title="LinkedIn">
+                            <i class="fab fa-linkedin text-sm"></i>
                         </a>
                         {% endif %}
                         {% if user.github_url %}
                         <a href="{{ user.github_url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-gray-800 transition" title="GitHub">
-                            <i class="fab fa-github text-xl"></i>
+                           class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-800 hover:text-white transition-all" title="GitHub">
+                            <i class="fab fa-github text-sm"></i>
                         </a>
                         {% endif %}
                         {% if user.portfolio_url %}
                         <a href="{{ user.portfolio_url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-purple-600 transition" title="Portfolio">
-                            <i class="fas fa-globe text-xl"></i>
+                           class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-primary-500 hover:text-white transition-all" title="Portfolio">
+                            <i class="fas fa-globe text-sm"></i>
                         </a>
                         {% endif %}
                         {% if user.twitter_url %}
                         <a href="{{ user.twitter_url }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-sky-500 transition" title="Twitter/X">
-                            <i class="fab fa-x-twitter text-xl"></i>
+                           class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-900 hover:text-white transition-all" title="Twitter/X">
+                            <i class="fab fa-x-twitter text-sm"></i>
                         </a>
                         {% endif %}
                         {% if user.company_website %}
                         <a href="{{ user.company_website }}" target="_blank" rel="noopener noreferrer"
-                           class="text-gray-500 hover:text-indigo-600 transition" title="Website">
-                            <i class="fas fa-link text-xl"></i>
+                           class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-indigo-500 hover:text-white transition-all" title="Website">
+                            <i class="fas fa-link text-sm"></i>
                         </a>
                         {% endif %}
                     </div>
@@ -128,27 +132,34 @@
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 space-y-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+        <!-- Main content -->
+        <div class="lg:col-span-2 space-y-5">
             {# About / Bio #}
             {% if user.bio %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-lg font-bold text-gray-800 mb-3">
-                    <i class="fas fa-user mr-2 text-purple-500"></i>{{ _('Sobre mí') }}
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <h2 class="text-base font-bold text-slate-800 mb-3 flex items-center gap-2">
+                    <div class="w-7 h-7 bg-primary-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user text-primary-500 text-xs"></i>
+                    </div>
+                    {{ _('Sobre mí') }}
                 </h2>
-                <div class="prose prose-sm max-w-none text-gray-700 whitespace-pre-line">{{ user.bio }}</div>
+                <div class="text-sm text-slate-600 leading-relaxed whitespace-pre-line">{{ user.bio }}</div>
             </div>
             {% endif %}
 
             {# Skills #}
             {% if user.skill_list %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-lg font-bold text-gray-800 mb-3">
-                    <i class="fas fa-tools mr-2 text-purple-500"></i>{{ _('Habilidades') }}
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.15s;">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <div class="w-7 h-7 bg-primary-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-tools text-primary-500 text-xs"></i>
+                    </div>
+                    {{ _('Habilidades') }}
                 </h2>
                 <div class="flex flex-wrap gap-2">
                     {% for skill in user.skill_list %}
-                    <span class="bg-purple-100 text-purple-700 px-3 py-1.5 rounded-full text-sm font-medium">
+                    <span class="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium border border-primary-100 hover:bg-primary-100 transition">
                         {{ skill }}
                     </span>
                     {% endfor %}
@@ -158,22 +169,25 @@
 
             {# Employer's active job postings #}
             {% if user.user_type == 'employer' and public_jobs %}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h2 class="text-lg font-bold text-gray-800 mb-4">
-                    <i class="fas fa-briefcase mr-2 text-purple-500"></i>
-                    {{ _('Ofertas activas') }} ({{ public_jobs|length }})
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+                <h2 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                    <div class="w-7 h-7 bg-primary-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-briefcase text-primary-500 text-xs"></i>
+                    </div>
+                    {{ _('Ofertas activas') }}
+                    <span class="ml-auto text-xs bg-primary-100 text-primary-600 px-2 py-0.5 rounded-full font-semibold">{{ public_jobs|length }}</span>
                 </h2>
-                <div class="space-y-3">
+                <div class="space-y-2.5">
                     {% for job in public_jobs %}
                     <a href="{{ url_for('job_detail', job_id=job.id) }}"
-                       class="block border border-gray-100 rounded-lg p-4 hover:border-purple-200 hover:bg-purple-50 transition">
-                        <h3 class="font-medium text-gray-800">{{ job.title }}</h3>
-                        <div class="flex flex-wrap gap-3 mt-1 text-xs text-gray-500">
-                            <span><i class="fas fa-map-marker-alt mr-1"></i>{{ job.location }}</span>
+                       class="block border border-slate-100 rounded-xl p-4 hover:border-primary-200 hover:bg-primary-50/30 transition-all group">
+                        <h3 class="font-semibold text-slate-800 text-sm group-hover:text-primary-600 transition-colors">{{ job.title }}</h3>
+                        <div class="flex flex-wrap gap-3 mt-1.5 text-xs text-slate-500">
+                            <span><i class="fas fa-map-marker-alt mr-1 text-slate-300"></i>{{ job.location }}</span>
                             {% if job.salary_range %}
-                            <span class="text-green-600"><i class="fas fa-money-bill-wave mr-1"></i>{{ job.salary_range }}</span>
+                            <span class="text-emerald-600 font-medium"><i class="fas fa-money-bill-wave mr-1"></i>{{ job.salary_range }}</span>
                             {% endif %}
-                            <span class="text-purple-600"><i class="fas fa-clock mr-1"></i>{{ job.created_at.strftime('%d/%m/%Y') }}</span>
+                            <span class="text-slate-400"><i class="fas fa-clock mr-1"></i>{{ job.created_at.strftime('%d/%m/%Y') }}</span>
                         </div>
                     </a>
                     {% endfor %}
@@ -183,44 +197,49 @@
         </div>
 
         {# Sidebar #}
-        <div class="space-y-6">
+        <div class="space-y-5">
             {# Contact / preferences #}
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-                <h3 class="font-bold text-gray-800 mb-3">
-                    <i class="fas fa-info-circle mr-2 text-purple-500"></i>{{ _('Información') }}
+            <div class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2 text-sm">
+                    <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-info text-primary-500 text-[10px]"></i>
+                    </div>
+                    {{ _('Información') }}
                 </h3>
-                <div class="space-y-3 text-sm">
+                <div class="space-y-4 text-sm">
                     {% if user.user_type == 'candidate' %}
                         {% if user.preferred_job_type %}
                         <div>
-                            <p class="text-gray-500 text-xs uppercase tracking-wide">{{ _('Tipo de empleo preferido') }}</p>
-                            <p class="text-gray-800 font-medium capitalize">{{ user.preferred_job_type }}</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{{ _('Tipo de empleo preferido') }}</p>
+                            <p class="text-slate-700 font-medium capitalize">{{ user.preferred_job_type }}</p>
                         </div>
                         {% endif %}
                         {% if user.preferred_remote %}
                         <div>
-                            <p class="text-gray-500 text-xs uppercase tracking-wide">{{ _('Modalidad') }}</p>
-                            <p class="text-gray-800 font-medium"><i class="fas fa-home mr-1 text-purple-500"></i>{{ _('Remoto') }}</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{{ _('Modalidad') }}</p>
+                            <p class="text-slate-700 font-medium flex items-center gap-1.5">
+                                <i class="fas fa-wifi text-primary-400 text-xs"></i>{{ _('Remoto') }}
+                            </p>
                         </div>
                         {% endif %}
                         {% if user.expected_salary %}
                         <div>
-                            <p class="text-gray-500 text-xs uppercase tracking-wide">{{ _('Salario esperado') }}</p>
-                            <p class="text-gray-800 font-medium">{{ user.expected_salary }}</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{{ _('Salario esperado') }}</p>
+                            <p class="text-slate-700 font-medium">{{ user.expected_salary }}</p>
                         </div>
                         {% endif %}
                     {% elif user.user_type == 'employer' %}
                         {% if user.company_name %}
                         <div>
-                            <p class="text-gray-500 text-xs uppercase tracking-wide">{{ _('Empresa') }}</p>
-                            <p class="text-gray-800 font-medium">{{ user.company_name }}</p>
+                            <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{{ _('Empresa') }}</p>
+                            <p class="text-slate-700 font-medium">{{ user.company_name }}</p>
                         </div>
                         {% endif %}
                     {% endif %}
 
                     <div>
-                        <p class="text-gray-500 text-xs uppercase tracking-wide">{{ _('Miembro desde') }}</p>
-                        <p class="text-gray-800 font-medium">
+                        <p class="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mb-0.5">{{ _('Miembro desde') }}</p>
+                        <p class="text-slate-700 font-medium">
                             {% if user.created_at %}{{ user.created_at.strftime('%B %Y') }}{% else %}-{% endif %}
                         </p>
                     </div>
@@ -228,23 +247,24 @@
 
                 {% if not is_owner and user.user_type == 'candidate' and user.open_to_work %}
                 <a href="mailto:{{ user.email }}"
-                   class="mt-4 w-full bg-purple-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-purple-700 transition flex items-center justify-center gap-2">
-                    <i class="fas fa-envelope"></i>{{ _('Contactar') }}
+                   class="mt-5 w-full button-primary text-sm py-2.5 block text-center">
+                    <i class="fas fa-envelope text-xs"></i>{{ _('Contactar') }}
                 </a>
                 {% endif %}
             </div>
 
-            {# Profile URL share #}
-            <div class="bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl p-5">
-                <h3 class="font-bold mb-2">
-                    <i class="fas fa-share-alt mr-2"></i>{{ _('Compartir perfil') }}
+            {# Share card #}
+            <div class="relative overflow-hidden bg-gradient-to-br from-primary-500 to-indigo-600 text-white rounded-2xl p-5 animate-fade-in-up" style="animation-delay: 0.15s;">
+                <div class="absolute top-0 right-0 w-20 h-20 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+                <h3 class="font-bold mb-2 text-sm flex items-center gap-2">
+                    <i class="fas fa-share-alt text-xs"></i>{{ _('Compartir perfil') }}
                 </h3>
-                <p class="text-sm text-purple-100 mb-3">
+                <p class="text-xs text-primary-100 mb-3 leading-relaxed">
                     {{ _('Comparte tu perfil profesional con un solo enlace') }}
                 </p>
-                <code class="block bg-white/20 backdrop-blur-sm rounded px-3 py-2 text-xs font-mono break-all">
-                    {{ request.host_url }}u/{{ user.username }}
-                </code>
+                <div class="bg-white/15 backdrop-blur-sm rounded-lg px-3 py-2.5">
+                    <code class="text-xs font-mono break-all text-white/90">{{ request.host_url }}u/{{ user.username }}</code>
+                </div>
             </div>
         </div>
     </div>
@@ -254,9 +274,12 @@
 function copyProfileLink() {
     const url = '{{ request.host_url }}u/{{ user.username }}';
     navigator.clipboard.writeText(url).then(() => {
-        document.getElementById('copy-text').textContent = '{{ _("¡Copiado!") }}';
+        const el = document.getElementById('copy-text');
+        el.textContent = '{{ _("¡Copiado!") }}';
+        el.parentElement.classList.add('!bg-emerald-50', '!text-emerald-700', '!border-emerald-200');
         setTimeout(() => {
-            document.getElementById('copy-text').textContent = '{{ _("Copiar enlace") }}';
+            el.textContent = '{{ _("Copiar enlace") }}';
+            el.parentElement.classList.remove('!bg-emerald-50', '!text-emerald-700', '!border-emerald-200');
         }, 2000);
     });
 }

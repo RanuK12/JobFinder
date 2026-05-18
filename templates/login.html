@@ -1,51 +1,68 @@
 {% extends "base.html" %}
-
 {% set title = _('Iniciar Sesión') %}
 
 {% block content %}
-<div class="max-w-md mx-auto bg-white rounded-xl shadow-md overflow-hidden md:max-w-2xl p-8">
-    <h1 class="text-3xl font-bold text-primary mb-6 text-center">
-        <i class="fas fa-sign-in-alt mr-2"></i>{{ _('Iniciar Sesión') }}
-    </h1>
-    
-    <form method="POST" class="space-y-6">
-        <div>
-            <label for="email" class="block text-sm font-medium text-gray-700">{{ _('Correo Electrónico') }}</label>
-            <input type="email" id="email" name="email" required
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
-        </div>
-        
-        <div>
-            <label for="password" class="block text-sm font-medium text-gray-700">{{ _('Contraseña') }}</label>
-            <input type="password" id="password" name="password" required
-                   class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary">
-        </div>
-        
-        <div class="flex items-center justify-between">
-            <div class="flex items-center">
-                <input type="checkbox" id="remember" name="remember"
-                       class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
-                <label for="remember" class="ml-2 block text-sm text-gray-700">
-                    {{ _('Recordarme') }}
-                </label>
+<div class="min-h-[70vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-md animate-fade-in-up">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <div class="w-14 h-14 bg-gradient-to-br from-primary-500 to-primary-700 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-glow">
+                <i class="fas fa-briefcase text-white text-xl"></i>
             </div>
-            
-            <a href="#" class="text-sm text-primary hover:text-primary-dark">
-                {{ _('¿Olvidaste tu contraseña?') }}
-            </a>
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">{{ _('Bienvenido de vuelta') }}</h1>
+            <p class="text-slate-500 text-sm mt-1">{{ _('Inicia sesión para continuar en JobConnect') }}</p>
         </div>
-        
-        <button type="submit"
-                class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary">
-            {{ _('Iniciar Sesión') }}
-        </button>
-    </form>
-    
-    <div class="mt-6 text-center">
-        <p class="text-sm text-gray-600">
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-soft p-7">
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label for="email" class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">{{ _('Correo Electrónico') }}</label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <i class="fas fa-envelope text-xs"></i>
+                        </div>
+                        <input type="email" id="email" name="email" required
+                               placeholder="tu@email.com"
+                               class="form-input w-full pl-10">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">{{ _('Contraseña') }}</label>
+                    <div class="relative">
+                        <div class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+                            <i class="fas fa-lock text-xs"></i>
+                        </div>
+                        <input type="password" id="password" name="password" required
+                               placeholder="••••••••"
+                               class="form-input w-full pl-10">
+                    </div>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <label class="flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="remember" name="remember"
+                               class="w-4 h-4 text-primary-500 focus:ring-primary-400 border-slate-300 rounded">
+                        <span class="text-sm text-slate-600">{{ _('Recordarme') }}</span>
+                    </label>
+                    <a href="#" class="text-sm text-primary-600 hover:text-primary-700 font-medium transition">
+                        {{ _('¿Olvidaste tu contraseña?') }}
+                    </a>
+                </div>
+                
+                <button type="submit" class="button-primary w-full py-3 text-sm">
+                    {{ _('Iniciar Sesión') }}
+                    <i class="fas fa-arrow-right text-xs"></i>
+                </button>
+            </form>
+        </div>
+
+        <!-- Footer link -->
+        <p class="text-center text-sm text-slate-500 mt-6">
             {{ _('¿No tienes una cuenta?') }}
-            <a href="{{ url_for('register') }}" class="font-medium text-primary hover:text-primary-dark">
-                {{ _('Regístrate') }}
+            <a href="{{ url_for('register') }}" class="text-primary-600 hover:text-primary-700 font-semibold transition">
+                {{ _('Regístrate gratis') }}
             </a>
         </p>
     </div>
