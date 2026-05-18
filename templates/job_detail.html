@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% set title = job.title %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white rounded-xl shadow-md p-8">
+    <!-- Header -->
+    <div class="border-b border-gray-200 pb-6 mb-6">
+        <h1 class="text-3xl font-bold text-primary mb-2">{{ job.title }}</h1>
+        <div class="flex flex-wrap gap-4 text-gray-600">
+            <span><i class="fas fa-building mr-1"></i>{{ job.company }}</span>
+            <span><i class="fas fa-map-marker-alt mr-1"></i>{{ job.location }}</span>
+            <span><i class="fas fa-briefcase mr-1"></i>{{ job.job_type or 'Full-time' }}</span>
+            {% if job.salary_range %}
+            <span><i class="fas fa-money-bill-wave mr-1"></i>{{ job.salary_range }}</span>
+            {% endif %}
+        </div>
+        <p class="text-sm text-gray-500 mt-2">
+            <i class="fas fa-clock mr-1"></i>{{ _('Publicado') }}: {{ job.created_at.strftime('%d/%m/%Y') }}
+        </p>
+    </div>
+
+    <!-- Description -->
+    <div class="mb-6">
+        <h2 class="text-xl font-bold text-primary mb-3">
+            <i class="fas fa-info-circle mr-2"></i>{{ _('Descripción') }}
+        </h2>
+        <div class="text-gray-700 whitespace-pre-line">{{ job.description }}</div>
+    </div>
+
+    <!-- Requirements -->
+    {% if job.requirements %}
+    <div class="mb-6">
+        <h2 class="text-xl font-bold text-primary mb-3">
+            <i class="fas fa-list-check mr-2"></i>{{ _('Requisitos') }}
+        </h2>
+        <div class="text-gray-700 whitespace-pre-line">{{ job.requirements }}</div>
+    </div>
+    {% endif %}
+
+    <!-- Actions -->
+    <div class="flex flex-wrap gap-3 mt-8 pt-6 border-t border-gray-200">
+        {% if job.url %}
+        <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer"
+           class="primary-bg text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition inline-flex items-center">
+            <i class="fas fa-external-link-alt mr-2"></i>{{ _('Ver Oferta Original') }}
+        </a>
+        {% endif %}
+        <a href="{{ url_for('employer_dashboard') }}"
+           class="bg-gray-200 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-300 transition inline-flex items-center">
+            <i class="fas fa-arrow-left mr-2"></i>{{ _('Volver') }}
+        </a>
+    </div>
+</div>
+{% endblock %}
