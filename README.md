@@ -6,6 +6,8 @@
 
 JobConnect is a web application that connects job seekers with remote opportunities. The platform analyzes your CV using natural language processing, extracts relevant skills and keywords, then searches multiple job platforms to find the best matches ranked by relevance.
 
+**Live Demo:** [Deployed on Railway 🚂](https://your-app-name.up.railway.app) (Update link when deployed)
+
 ### Key Features
 
 - **Smart CV Analysis** - Supports PDF and DOCX formats with automatic text extraction and section detection
@@ -188,10 +190,21 @@ Set the environment via `FLASK_ENV` environment variable or pass directly to `cr
 
 ### Production with Gunicorn
 
+### Production with Gunicorn (Manual)
+
 ```bash
 pip install gunicorn
-gunicorn "app:create_app('production')" -w 4 -b 0.0.0.0:8000
+gunicorn "wsgi:app" -w 4 -b 0.0.0.0:8000
 ```
+
+### Deploying to Railway 🚂
+
+This repository is pre-configured for automatic deployment on [Railway](https://railway.app/).
+
+1. **Connect GitHub:** Create a new project on Railway and deploy from your GitHub repository.
+2. **Auto Detection:** Railway will use `Nixpacks` and automatically detect the Python environment.
+3. **Start Command:** The `railway.json` and `Procfile` are already set up to run `gunicorn wsgi:app`.
+4. **Environment Variables:** Don't forget to add your `.env` variables (e.g. `SECRET_KEY`, `FLASK_ENV=production`) in the Railway project variables settings.
 
 ### Environment Variables for Production
 
