@@ -7,7 +7,7 @@ application factory pattern for better testability and modularity.
 
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from flask import (
     Flask, request, session, redirect, url_for,
@@ -24,6 +24,7 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from functools import wraps
 
 from config import config
 
@@ -43,6 +44,21 @@ logger = logging.getLogger(__name__)
 
 
 # =============================================================================
+# Admin Decorator
+# =============================================================================
+
+def admin_required(f):
+    """Decorator to require admin access for a route."""
+    @wraps(f)
+    @login_required
+    def decorated_function(*args, **kwargs):
+        if not current_user.is_authenticated or current_user.user_type != 'admin':
+            abort(403)
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+# =============================================================================
 # Database Models
 # =============================================================================
 
@@ -58,11 +74,13 @@ class User(UserMixin, db.Model):
     profile_picture = db.Column(
         db.String(200), default='profiles/default-profile.jpg'
     )
-    user_type = db.Column(db.String(20), nullable=False)  # candidate/employer
+    user_type = db.Column(db.String(20), nullable=False)  # candidate/employer/admin
     skills = db.Column(db.Text, default='')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    is_active_user = db.Column(db.Boolean, default=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
 
     # Relationships
@@ -78,6 +96,10 @@ class User(UserMixin, db.Model):
     def check_password(self, password):
         """Check if the provided password matches the hash."""
         return check_password_hash(self.password_hash, password)
+
+    @property
+    def is_admin(self):
+        return self.user_type == 'admin'
 
     def __repr__(self):
         return f'<User {self.email}>'
@@ -95,8 +117,8 @@ class Application(db.Model):
     job_title = db.Column(db.String(200), nullable=False)
     company = db.Column(db.String(120), nullable=False)
     job_url = db.Column(db.String(500), default='')
-    status = db.Column(db.String(20), default='applied')  # applied/interview/rejected/accepted
-    application_date = db.Column(db.DateTime, default=datetime.utcnow)
+    status = db.Column(db.String(20), default='applied')
+    application_date = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     notes = db.Column(db.Text, default='')
 
     def __repr__(self):
@@ -115,19 +137,21 @@ class Job(db.Model):
     description = db.Column(db.Text, nullable=False)
     requirements = db.Column(db.Text, default='')
     salary_range = db.Column(db.String(100), default='')
-    job_type = db.Column(db.String(50), default='full-time')  # full-time/part-time/contract
+    job_type = db.Column(db.String(50), default='full-time')
     url = db.Column(db.String(500), default='')
     employer_id = db.Column(
         db.Integer, db.ForeignKey('users.id'), nullable=False, index=True
     )
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = db.Column(
-        db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow
+        db.DateTime, default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc)
     )
 
     def __repr__(self):
         return f'<Job {self.title} @ {self.company}>'
+
 
 
 # =============================================================================
@@ -164,7 +188,7 @@ def create_app(config_name=None):
             return session['language']
         return request.accept_languages.best_match(
             app.config['LANGUAGES'].keys()
-        )
+        ) or 'es'
 
     # Initialize extensions with app
     db.init_app(app)
@@ -175,7 +199,7 @@ def create_app(config_name=None):
 
     # Configure login manager
     login_manager.login_view = 'login'
-    login_manager.login_message = _('Por favor inicia sesión para acceder a esta página.')
+    login_manager.login_message = 'Por favor inicia sesión para acceder a esta página.'
     login_manager.login_message_category = 'warning'
 
     # Context processors
@@ -185,7 +209,7 @@ def create_app(config_name=None):
         return {
             'current_language': get_locale(),
             'app_name': app.config['APP_NAME'],
-            'now': datetime.utcnow()
+            'now': datetime.now(timezone.utc)
         }
 
     # User loader
@@ -196,14 +220,40 @@ def create_app(config_name=None):
     # Register routes
     _register_routes(app)
 
+    # Register admin routes
+    _register_admin_routes(app)
+
     # Register error handlers
     _register_error_handlers(app)
 
-    # Create database tables
+    # Create database tables and ensure admin exists
     with app.app_context():
         db.create_all()
+        _ensure_admin_exists()
 
     return app
+
+
+def _ensure_admin_exists():
+    """Create default admin user if none exists."""
+    admin = User.query.filter_by(user_type='admin').first()
+    if not admin:
+        admin = User(
+            email='admin@jobconnect.com',
+            full_name='Administrador',
+            user_type='admin',
+            skills='',
+            is_active_user=True
+        )
+        admin.set_password('Admin123!')
+        db.session.add(admin)
+        try:
+            db.session.commit()
+            logger.info("Admin user created: admin@jobconnect.com / Admin123!")
+        except Exception as e:
+            db.session.rollback()
+            logger.error(f"Error creating admin user: {e}")
+
 
 
 # =============================================================================
@@ -232,7 +282,7 @@ def _register_routes(app):
     # =========================================================================
 
     @app.route('/login', methods=['GET', 'POST'])
-    @limiter.limit("5 per minute")
+    @limiter.limit("10 per minute")
     def login():
         """User login."""
         if current_user.is_authenticated:
@@ -249,6 +299,9 @@ def _register_routes(app):
             user = User.query.filter_by(email=email).first()
 
             if user and user.check_password(password):
+                if hasattr(user, 'is_active_user') and not user.is_active_user:
+                    flash(_('Tu cuenta ha sido desactivada. Contacta al administrador.'), 'danger')
+                    return render_template('login.html')
                 login_user(user, remember=request.form.get('remember'))
                 flash(_('Has iniciado sesión correctamente.'), 'success')
                 next_page = request.args.get('next')
@@ -259,7 +312,7 @@ def _register_routes(app):
         return render_template('login.html')
 
     @app.route('/register', methods=['GET', 'POST'])
-    @limiter.limit("3 per minute")
+    @limiter.limit("5 per minute")
     def register():
         """User registration."""
         if current_user.is_authenticated:
@@ -295,7 +348,8 @@ def _register_routes(app):
                 email=email,
                 full_name=full_name,
                 user_type=user_type,
-                skills=''
+                skills='',
+                is_active_user=True
             )
             new_user.set_password(password)
 
@@ -303,7 +357,7 @@ def _register_routes(app):
             db.session.commit()
 
             login_user(new_user)
-            flash(_('Registro exitoso. Bienvenido a JobConnect!'), 'success')
+            flash(_('Registro exitoso. ¡Bienvenido a JobConnect!'), 'success')
             return redirect(url_for('dashboard'))
 
         return render_template('register.html')
@@ -324,6 +378,8 @@ def _register_routes(app):
     @login_required
     def dashboard():
         """Redirect to appropriate dashboard based on user type."""
+        if current_user.user_type == 'admin':
+            return redirect(url_for('admin_dashboard'))
         if current_user.user_type == 'employer':
             return redirect(url_for('employer_dashboard'))
         return redirect(url_for('candidate_dashboard'))
@@ -332,7 +388,7 @@ def _register_routes(app):
     @login_required
     def candidate_dashboard():
         """Candidate dashboard with profile management."""
-        if current_user.user_type != 'candidate':
+        if current_user.user_type not in ('candidate', 'admin'):
             abort(403)
         recent_applications = current_user.applications.order_by(
             Application.application_date.desc()
@@ -346,7 +402,7 @@ def _register_routes(app):
     @login_required
     def employer_dashboard():
         """Employer dashboard with job management."""
-        if current_user.user_type != 'employer':
+        if current_user.user_type not in ('employer', 'admin'):
             abort(403)
         jobs = current_user.jobs.order_by(Job.created_at.desc()).all()
         return render_template('employer_dashboard.html', jobs=jobs)
@@ -392,7 +448,7 @@ def _register_routes(app):
                 # Search for jobs
                 from scraper import JobScraper
                 scraper = JobScraper(app)
-                jobs = scraper.get_jobs(cv_text, session.get('language', 'en'))
+                jobs = scraper.get_jobs(cv_text, session.get('language', 'es'))
 
                 # Match jobs with AI
                 from ai_matcher import match_jobs
@@ -425,7 +481,6 @@ def _register_routes(app):
                 )
                 return redirect(request.url)
             finally:
-                # Cleanup uploaded file
                 if filepath and os.path.exists(filepath):
                     try:
                         os.remove(filepath)
@@ -452,7 +507,6 @@ def _register_routes(app):
     @login_required
     def update_profile():
         """Update user profile (photo and skills)."""
-        # Update profile picture
         if 'profile_picture' in request.files:
             file = request.files['profile_picture']
             if file and file.filename:
@@ -468,7 +522,6 @@ def _register_routes(app):
                     file.save(filepath)
                     current_user.profile_picture = f'profiles/{filename}'
 
-        # Update skills
         skills = request.form.get('skills', '').strip()
         if skills:
             cleaned_skills = ', '.join([
@@ -501,7 +554,6 @@ def _register_routes(app):
                 'message': _('Datos incompletos.')
             }), 400
 
-        # Check for duplicate application
         existing = Application.query.filter_by(
             user_id=current_user.id,
             job_title=data['title'],
@@ -532,7 +584,7 @@ def _register_routes(app):
     @login_required
     def applications():
         """View user's job applications."""
-        if current_user.user_type != 'candidate':
+        if current_user.user_type not in ('candidate', 'admin'):
             abort(403)
 
         user_applications = current_user.applications.order_by(
@@ -550,7 +602,7 @@ def _register_routes(app):
     @login_required
     def create_job():
         """Create a new job listing."""
-        if current_user.user_type != 'employer':
+        if current_user.user_type not in ('employer', 'admin'):
             abort(403)
 
         if request.method == 'POST':
@@ -582,12 +634,11 @@ def _register_routes(app):
             db.session.commit()
 
             flash(_('Oferta laboral creada correctamente.'), 'success')
-            return redirect(url_for('employer_dashboard'))
+            return redirect(url_for('employer_dashboard') if current_user.user_type == 'employer' else url_for('admin_jobs'))
 
         return render_template('create_job.html')
 
     @app.route('/job/<int:job_id>')
-    @login_required
     def job_detail(job_id):
         """View job details."""
         job = Job.query.get_or_404(job_id)
@@ -598,7 +649,7 @@ def _register_routes(app):
     def edit_job(job_id):
         """Edit an existing job listing."""
         job = Job.query.get_or_404(job_id)
-        if job.employer_id != current_user.id:
+        if job.employer_id != current_user.id and current_user.user_type != 'admin':
             abort(403)
 
         if request.method == 'POST':
@@ -610,9 +661,12 @@ def _register_routes(app):
             job.salary_range = request.form.get('salary_range', job.salary_range).strip()
             job.job_type = request.form.get('job_type', job.job_type)
             job.url = request.form.get('url', job.url).strip()
+            job.is_active = 'is_active' in request.form
 
             db.session.commit()
             flash(_('Oferta actualizada correctamente.'), 'success')
+            if current_user.user_type == 'admin':
+                return redirect(url_for('admin_jobs'))
             return redirect(url_for('employer_dashboard'))
 
         return render_template('edit_job.html', job=job)
@@ -622,12 +676,14 @@ def _register_routes(app):
     def delete_job(job_id):
         """Delete a job listing."""
         job = Job.query.get_or_404(job_id)
-        if job.employer_id != current_user.id:
+        if job.employer_id != current_user.id and current_user.user_type != 'admin':
             abort(403)
 
         db.session.delete(job)
         db.session.commit()
         flash(_('Oferta eliminada correctamente.'), 'success')
+        if current_user.user_type == 'admin':
+            return redirect(url_for('admin_jobs'))
         return redirect(url_for('employer_dashboard'))
 
     @app.route('/jobs')
@@ -637,6 +693,170 @@ def _register_routes(app):
             Job.created_at.desc()
         ).all()
         return render_template('job_listings.html', jobs=jobs)
+
+
+
+# =============================================================================
+# Admin Routes
+# =============================================================================
+
+def _register_admin_routes(app):
+    """Register admin panel routes."""
+
+    @app.route('/admin')
+    @admin_required
+    def admin_dashboard():
+        """Admin dashboard with system overview."""
+        total_users = User.query.count()
+        total_candidates = User.query.filter_by(user_type='candidate').count()
+        total_employers = User.query.filter_by(user_type='employer').count()
+        total_jobs = Job.query.count()
+        active_jobs = Job.query.filter_by(is_active=True).count()
+        total_applications = Application.query.count()
+        recent_users = User.query.order_by(User.created_at.desc()).limit(5).all()
+        recent_jobs = Job.query.order_by(Job.created_at.desc()).limit(5).all()
+
+        return render_template('admin/dashboard.html',
+            total_users=total_users,
+            total_candidates=total_candidates,
+            total_employers=total_employers,
+            total_jobs=total_jobs,
+            active_jobs=active_jobs,
+            total_applications=total_applications,
+            recent_users=recent_users,
+            recent_jobs=recent_jobs
+        )
+
+    @app.route('/admin/users')
+    @admin_required
+    def admin_users():
+        """Manage all users."""
+        users = User.query.order_by(User.created_at.desc()).all()
+        return render_template('admin/users.html', users=users)
+
+    @app.route('/admin/users/<int:user_id>/toggle', methods=['POST'])
+    @admin_required
+    def admin_toggle_user(user_id):
+        """Activate/deactivate a user."""
+        user = User.query.get_or_404(user_id)
+        if user.id == current_user.id:
+            flash(_('No puedes desactivar tu propia cuenta.'), 'danger')
+            return redirect(url_for('admin_users'))
+        user.is_active_user = not user.is_active_user
+        db.session.commit()
+        status = _('activado') if user.is_active_user else _('desactivado')
+        flash(f'Usuario {user.full_name} {status}.', 'success')
+        return redirect(url_for('admin_users'))
+
+    @app.route('/admin/users/<int:user_id>/delete', methods=['POST'])
+    @admin_required
+    def admin_delete_user(user_id):
+        """Delete a user and their data."""
+        user = User.query.get_or_404(user_id)
+        if user.id == current_user.id:
+            flash(_('No puedes eliminar tu propia cuenta.'), 'danger')
+            return redirect(url_for('admin_users'))
+        # Delete related data
+        Application.query.filter_by(user_id=user.id).delete()
+        Job.query.filter_by(employer_id=user.id).delete()
+        db.session.delete(user)
+        db.session.commit()
+        flash(f'Usuario {user.full_name} eliminado.', 'success')
+        return redirect(url_for('admin_users'))
+
+    @app.route('/admin/users/<int:user_id>/change-type', methods=['POST'])
+    @admin_required
+    def admin_change_user_type(user_id):
+        """Change a user's type."""
+        user = User.query.get_or_404(user_id)
+        new_type = request.form.get('user_type', '')
+        if new_type in ('candidate', 'employer', 'admin'):
+            user.user_type = new_type
+            db.session.commit()
+            flash(f'Tipo de usuario cambiado a {new_type}.', 'success')
+        else:
+            flash(_('Tipo de usuario inválido.'), 'danger')
+        return redirect(url_for('admin_users'))
+
+    @app.route('/admin/users/<int:user_id>/reset-password', methods=['POST'])
+    @admin_required
+    def admin_reset_password(user_id):
+        """Reset a user's password."""
+        user = User.query.get_or_404(user_id)
+        new_password = request.form.get('new_password', '').strip()
+        if len(new_password) < 8:
+            flash(_('La contraseña debe tener al menos 8 caracteres.'), 'danger')
+            return redirect(url_for('admin_users'))
+        user.set_password(new_password)
+        db.session.commit()
+        flash(f'Contraseña de {user.full_name} actualizada.', 'success')
+        return redirect(url_for('admin_users'))
+
+    @app.route('/admin/jobs')
+    @admin_required
+    def admin_jobs():
+        """Manage all jobs."""
+        jobs = Job.query.order_by(Job.created_at.desc()).all()
+        return render_template('admin/jobs.html', jobs=jobs)
+
+    @app.route('/admin/jobs/<int:job_id>/toggle', methods=['POST'])
+    @admin_required
+    def admin_toggle_job(job_id):
+        """Activate/deactivate a job."""
+        job = Job.query.get_or_404(job_id)
+        job.is_active = not job.is_active
+        db.session.commit()
+        status = _('activada') if job.is_active else _('desactivada')
+        flash(f'Oferta "{job.title}" {status}.', 'success')
+        return redirect(url_for('admin_jobs'))
+
+    @app.route('/admin/applications')
+    @admin_required
+    def admin_applications():
+        """View all applications."""
+        all_applications = Application.query.order_by(
+            Application.application_date.desc()
+        ).all()
+        return render_template('admin/applications.html', applications=all_applications)
+
+    @app.route('/admin/create-user', methods=['GET', 'POST'])
+    @admin_required
+    def admin_create_user():
+        """Admin creates a new user."""
+        if request.method == 'POST':
+            email = request.form.get('email', '').strip().lower()
+            password = request.form.get('password', '').strip()
+            full_name = request.form.get('full_name', '').strip()
+            user_type = request.form.get('user_type', 'candidate')
+
+            if not email or not password or not full_name:
+                flash(_('Todos los campos son obligatorios.'), 'danger')
+                return render_template('admin/create_user.html')
+
+            if User.query.filter_by(email=email).first():
+                flash(_('El email ya está registrado.'), 'danger')
+                return render_template('admin/create_user.html')
+
+            if len(password) < 8:
+                flash(_('La contraseña debe tener al menos 8 caracteres.'), 'danger')
+                return render_template('admin/create_user.html')
+
+            new_user = User(
+                email=email,
+                full_name=full_name,
+                user_type=user_type,
+                skills='',
+                is_active_user=True
+            )
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+
+            flash(f'Usuario {full_name} creado exitosamente.', 'success')
+            return redirect(url_for('admin_users'))
+
+        return render_template('admin/create_user.html')
+
 
 
 # =============================================================================

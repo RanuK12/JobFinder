@@ -17,7 +17,7 @@ class Config:
     """Base configuration class with shared settings."""
 
     # Security
-    SECRET_KEY = os.environ.get('SECRET_KEY') or os.urandom(32).hex()
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'jobconnect-dev-secret-key-change-in-production-2024')
     WTF_CSRF_ENABLED = True
 
     # Application
