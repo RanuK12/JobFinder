@@ -2,122 +2,154 @@
 {% set title = _('Resultados de Búsqueda') %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="text-center mb-8">
-        <h1 class="text-3xl font-bold text-primary mb-2">
-            <i class="fas fa-briefcase mr-2"></i>{{ _('Trabajos Recomendados') }}
-        </h1>
-        <p class="text-gray-600">
-            {{ _('Se encontraron %(count)s trabajos que coinciden con tu perfil', count=jobs|length) }}
-        </p>
+<div class="max-w-5xl mx-auto">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+        <div>
+            <h1 class="text-2xl font-bold text-primary">
+                <i class="fas fa-list-alt mr-2"></i>{{ _('Resultados') }}
+            </h1>
+            <p class="text-gray-500 text-sm mt-1">
+                {{ _('Se encontraron') }} <strong>{{ jobs|length }}</strong> {{ _('trabajos') }}
+            </p>
+        </div>
+        <a href="{{ url_for('index') }}" class="primary-bg text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm">
+            <i class="fas fa-search"></i>{{ _('Nueva Búsqueda') }}
+        </a>
     </div>
 
-    {% if jobs %}
+    <!-- Results List -->
     <div class="space-y-4">
         {% for job in jobs %}
-        <div class="bg-white rounded-xl card-hover p-6">
-            <div class="flex flex-col md:flex-row items-start justify-between gap-4">
-                <!-- Job Info -->
+        <div class="bg-white rounded-xl border border-gray-100 hover:border-purple-200 hover:shadow-md transition p-6">
+            <div class="flex flex-col lg:flex-row gap-4">
+                <!-- Main Info -->
                 <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                        <h2 class="text-xl font-bold text-primary">
-                            {{ job.title or 'N/A' }}
-                        </h2>
-                        {% if job.relevance %}
-                        <span class="text-xs px-2 py-1 rounded-full font-medium
+                    <div class="flex items-start justify-between gap-2">
+                        <h2 class="text-lg font-bold text-gray-800 leading-tight">{{ job.title }}</h2>
+                        {% if job.match_score is defined and job.match_score %}
+                        <span class="shrink-0 text-xs px-2 py-1 rounded-full font-medium
                             {% if job.relevance == 'high' %}bg-green-100 text-green-700
                             {% elif job.relevance == 'medium' %}bg-yellow-100 text-yellow-700
                             {% else %}bg-gray-100 text-gray-600{% endif %}">
-                            {% if job.relevance == 'high' %}{{ _('Alta relevancia') }}
-                            {% elif job.relevance == 'medium' %}{{ _('Relevancia media') }}
-                            {% else %}{{ _('Relevancia baja') }}{% endif %}
+                            {{ job.match_score }}% match
                         </span>
                         {% endif %}
                     </div>
 
-                    <div class="flex flex-wrap gap-3 text-sm text-gray-600 mb-3">
-                        <span><i class="fas fa-building mr-1"></i>{{ job.company or 'N/A' }}</span>
-                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ job.location or 'Remote' }}</span>
+                    <div class="flex flex-wrap items-center gap-3 mt-2 text-sm text-gray-600">
+                        {% if job.company %}
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-building text-purple-400"></i>{{ job.company }}
+                        </span>
+                        {% endif %}
+                        {% if job.location %}
+                        <span class="flex items-center gap-1">
+                            <i class="fas fa-map-marker-alt text-purple-400"></i>{{ job.location }}
+                        </span>
+                        {% endif %}
+                        {% if job.is_remote %}
+                        <span class="flex items-center gap-1 text-green-600">
+                            <i class="fas fa-globe"></i>{{ _('Remoto') }}
+                        </span>
+                        {% endif %}
                         {% if job.platform %}
-                        <span><i class="fas fa-globe mr-1"></i>{{ job.platform }}</span>
-                        {% endif %}
-                        {% if job.match_score %}
-                        <span class="text-primary font-medium">
-                            <i class="fas fa-star mr-1"></i>{{ job.match_score }}% match
+                        <span class="flex items-center gap-1 text-gray-400">
+                            <i class="fas fa-external-link-alt"></i>{{ job.platform }}
                         </span>
                         {% endif %}
                     </div>
 
-                    <!-- Matched Skills -->
-                    {% if job.keywords_matched %}
-                    <div class="flex flex-wrap gap-1.5 mt-2">
-                        {% for keyword in job.keywords_matched[:8] %}
-                        <span class="bg-purple-100 text-purple-700 px-2.5 py-0.5 rounded-full text-xs font-medium">
-                            {{ keyword }}
+                    <!-- Tags row -->
+                    <div class="flex flex-wrap gap-2 mt-3">
+                        {% if job.job_type %}
+                        <span class="text-xs px-2 py-1 rounded-full bg-purple-50 text-purple-700">{{ job.job_type }}</span>
+                        {% endif %}
+                        {% if job.salary_range %}
+                        <span class="text-xs px-2 py-1 rounded-full bg-green-50 text-green-700">
+                            <i class="fas fa-money-bill-wave mr-1"></i>{{ job.salary_range }}
                         </span>
+                        {% endif %}
+                        {% if job.date_posted %}
+                        <span class="text-xs px-2 py-1 rounded-full bg-gray-50 text-gray-600">
+                            <i class="fas fa-clock mr-1"></i>{{ job.date_posted }}
+                        </span>
+                        {% endif %}
+                        {% for tag in (job.tags or [])[:5] %}
+                        <span class="text-xs px-2 py-1 rounded-full bg-blue-50 text-blue-600">{{ tag }}</span>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Description preview -->
+                    {% if job.description %}
+                    <p class="text-sm text-gray-500 mt-3 line-clamp-2">
+                        {{ job.description|striptags|truncate(200) }}
+                    </p>
+                    {% endif %}
+
+                    <!-- Match reasons -->
+                    {% if job.match_reasons is defined and job.match_reasons %}
+                    <div class="mt-2">
+                        {% for reason in job.match_reasons[:2] %}
+                        <span class="text-xs text-green-600"><i class="fas fa-check mr-1"></i>{{ reason }}</span>
                         {% endfor %}
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- Actions -->
-                <div class="flex flex-col gap-2 min-w-[140px]">
+                <!-- Action Button -->
+                <div class="flex lg:flex-col items-center gap-2 lg:justify-center">
                     {% if job.url %}
                     <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer"
-                       class="primary-bg text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2">
+                       class="primary-bg text-white px-5 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap hover:bg-purple-700 transition">
                         <i class="fas fa-external-link-alt"></i>{{ _('Ver Oferta') }}
                     </a>
                     {% endif %}
-                    <button onclick="applyJob('{{ job.title|e }}', '{{ job.company|e }}', '{{ job.url|default("", true)|e }}')"
-                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition">
-                        <i class="fas fa-check-circle"></i>{{ _('Guardar') }}
+                    {% if current_user.user_type == 'candidate' %}
+                    <button onclick="saveJob('{{ job.title|e }}', '{{ job.company|e }}', '{{ job.url|e }}')"
+                            class="bg-gray-100 text-gray-700 px-5 py-2 rounded-lg text-sm flex items-center gap-2 whitespace-nowrap hover:bg-gray-200 transition">
+                        <i class="fas fa-bookmark"></i>{{ _('Guardar') }}
                     </button>
+                    {% endif %}
                 </div>
             </div>
         </div>
         {% endfor %}
     </div>
-    {% else %}
-    <div class="text-center py-12 bg-purple-50 rounded-xl">
-        <i class="fas fa-search text-5xl text-primary mb-4"></i>
-        <p class="text-gray-600 text-lg">{{ _('No se encontraron trabajos que coincidan con tu CV.') }}</p>
-    </div>
-    {% endif %}
 
-    <!-- Back to Search -->
+    <!-- Bottom actions -->
     <div class="mt-8 text-center">
-        <a href="{{ url_for('index') }}"
-           class="accent-bg text-white px-8 py-3 rounded-lg inline-flex items-center gap-2 transition">
-            <i class="fas fa-redo"></i>{{ _('Nueva Búsqueda') }}
+        <a href="{{ url_for('index') }}" class="button-primary">
+            <i class="fas fa-search mr-2"></i>{{ _('Buscar más trabajos') }}
         </a>
     </div>
 </div>
 
+<style>
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>
+
 <script>
-    function applyJob(title, company, url) {
-        fetch('/apply_job', {
+    function saveJob(title, company, url) {
+        fetch('{{ url_for("apply_job") }}', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, company, url })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({title: title, company: company, url: url})
         })
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
-            const msg = data.status === 'success' 
-                ? '{{ _("Postulación guardada exitosamente.") }}'
-                : data.message || '{{ _("Ya aplicaste a este trabajo.") }}';
-            
-            // Show inline notification
-            const notification = document.createElement('div');
-            notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
-                data.status === 'success' ? 'bg-green-500' : 'bg-yellow-500'
-            } text-white font-medium`;
-            notification.textContent = msg;
-            document.body.appendChild(notification);
-            setTimeout(() => notification.remove(), 3000);
+            if (data.status === 'success') {
+                alert('{{ _("Trabajo guardado en tus postulaciones") }}');
+            } else {
+                alert(data.message || '{{ _("Error al guardar") }}');
+            }
         })
-        .catch(() => {
-            alert('{{ _("Error al procesar. Inténtalo de nuevo.") }}');
-        });
+        .catch(() => alert('{{ _("Error de conexión") }}'));
     }
 </script>
 {% endblock %}

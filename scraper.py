@@ -1,24 +1,15 @@
 """
-Job Scraper Module
+Job Scraper Module - Powered by JobSpy
 
-Scrapes job listings from multiple remote job platforms based on
-keywords extracted from a user's CV. Includes rate limiting,
-error handling, and anti-detection measures.
+Uses the python-jobspy library to aggregate job listings from multiple
+platforms (Indeed, LinkedIn, Glassdoor, Google, ZipRecruiter) based on
+keywords extracted from a user's CV.
 """
 
-import os
 import re
-import time
-import random
-import hashlib
 import logging
 from typing import Dict, List, Optional, Set
-from urllib.parse import urljoin, urlparse, quote_plus
-
-import requests
-from bs4 import BeautifulSoup
-from fake_useragent import UserAgent
-import backoff
+from collections import Counter
 
 logger = logging.getLogger(__name__)
 
@@ -30,338 +21,207 @@ class ScraperError(Exception):
 
 class JobScraper:
     """
-    Scrapes job listings from multiple platforms.
+    Scrapes job listings from multiple platforms using JobSpy.
 
-    Supports WeWorkRemotely and RemoteOK with configurable
-    selectors and anti-detection measures.
+    Supports Indeed, LinkedIn, Google, Glassdoor, and ZipRecruiter.
     """
 
-    def __init__(self, app):
+    def __init__(self, app=None):
         """
         Initialize the job scraper.
 
         Args:
-            app: Flask application instance with config.
+            app: Flask application instance with config (optional).
         """
-        self.config = app.config
-        self.session = requests.Session()
-        self.ua = UserAgent(fallback='Mozilla/5.0')
+        self.config = app.config if app else {}
         self.logger = logging.getLogger('JobScraper')
-        self._setup_logging()
 
-    def _setup_logging(self):
-        """Configure scraper-specific logging."""
-        log_dir = self.config.get('LOG_DIR', 'static/logs')
-        os.makedirs(log_dir, exist_ok=True)
-
-        if not self.logger.handlers:
-            # File handler
-            file_handler = logging.FileHandler(
-                os.path.join(log_dir, 'scraper.log')
-            )
-            file_handler.setLevel(logging.INFO)
-            formatter = logging.Formatter(
-                '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-            )
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-            self.logger.setLevel(logging.INFO)
-
-    def _get_delay(self) -> float:
-        """Get a random delay between requests to avoid rate limiting."""
-        delay_range = self.config.get('SCRAPING_DELAY', (2, 5))
-        return random.uniform(*delay_range)
-
-    def _get_headers(self) -> Dict[str, str]:
-        """Generate realistic browser headers."""
-        return {
-            'User-Agent': self.ua.random,
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.9,es;q=0.8',
-            'Accept-Encoding': 'gzip, deflate, br',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1',
-            'DNT': '1',
-            'Cache-Control': 'max-age=0',
-        }
-
-    def _validate_url(self, url: str) -> bool:
-        """Validate URL format and scheme."""
-        try:
-            result = urlparse(url)
-            return all([result.scheme, result.netloc]) and result.scheme in ('http', 'https')
-        except Exception:
-            return False
-
-    def _generate_job_id(self, title: str, company: str) -> str:
-        """Generate a deterministic unique job ID."""
-        job_str = f"{title.lower().strip()}-{company.lower().strip()}"
-        return hashlib.md5(job_str.encode()).hexdigest()[:12]
-
-    @backoff.on_exception(
-        backoff.expo,
-        (requests.exceptions.RequestException, requests.exceptions.Timeout),
-        max_tries=3,
-        max_time=60
-    )
-    def _make_request(self, url: str) -> Optional[str]:
-        """
-        Make an HTTP request with retry logic.
-
-        Args:
-            url: URL to request.
-
-        Returns:
-            Response HTML content or None.
-        """
-        if not self._validate_url(url):
-            self.logger.error(f"Invalid URL: {url}")
-            return None
-
-        time.sleep(self._get_delay())
-
-        try:
-            response = self.session.get(
-                url,
-                headers=self._get_headers(),
-                timeout=self.config.get('SCRAPING_TIMEOUT', 30),
-                allow_redirects=True
-            )
-
-            if response.status_code == 200:
-                return response.text
-            elif response.status_code == 429:
-                self.logger.warning(f"Rate limited on {url}, backing off...")
-                time.sleep(10)
-                return None
-            else:
-                self.logger.warning(
-                    f"HTTP {response.status_code} for {url}"
-                )
-                return None
-
-        except requests.exceptions.Timeout:
-            self.logger.warning(f"Timeout for {url}")
-            return None
-        except requests.exceptions.ConnectionError:
-            self.logger.warning(f"Connection error for {url}")
-            return None
-        except Exception as e:
-            self.logger.error(f"Request error for {url}: {str(e)}")
-            return None
-
-    def get_jobs(self, cv_text: str, language: str = 'en') -> List[Dict]:
-        """
-        Search for jobs based on CV text content.
-
-        Args:
-            cv_text: Extracted CV text.
-            language: Preferred language code.
-
-        Returns:
-            List of job dictionaries.
-        """
-        self.logger.info("Starting job search")
-
-        if not cv_text or not isinstance(cv_text, str):
-            self.logger.error("Invalid CV text provided")
-            return []
-
-        cv_text = cv_text.strip()
-        if not cv_text:
-            self.logger.error("Empty CV text")
-            return []
-
-        # Extract search keywords
-        keywords = self._extract_keywords(cv_text)
-        if not keywords:
-            self.logger.warning("No keywords extracted from CV")
-            return []
-
-        self.logger.info(f"Search keywords: {keywords}")
-
-        # Search across platforms
-        all_jobs = []
-        seen_jobs: Set[str] = set()
-
-        platforms = self.config.get('PLATFORMS', {})
-        for platform_name, platform_config in platforms.items():
-            if not platform_config.get('enabled', True):
-                continue
-
-            try:
-                platform_jobs = self._scrape_platform(
-                    platform_name, platform_config, keywords
-                )
-                for job in platform_jobs:
-                    job_id = self._generate_job_id(
-                        job.get('title', ''), job.get('company', '')
-                    )
-                    if job_id not in seen_jobs:
-                        seen_jobs.add(job_id)
-                        job['id'] = job_id
-                        all_jobs.append(job)
-            except Exception as e:
-                self.logger.error(
-                    f"Error scraping {platform_name}: {str(e)}"
-                )
-                continue
-
-        max_jobs = self.config.get('MAX_JOBS_PER_PLATFORM', 20) * len(platforms)
-        all_jobs = all_jobs[:max_jobs]
-
-        self.logger.info(f"Found {len(all_jobs)} unique jobs")
-        return all_jobs
-
-    def _scrape_platform(
+    def get_jobs(
         self,
-        platform_name: str,
-        platform_config: Dict,
-        keywords: List[str]
+        cv_text: str = None,
+        language: str = 'es',
+        search_term: str = None,
+        location: str = None,
+        job_type: str = None,
+        is_remote: bool = False,
+        results_wanted: int = 25,
+        hours_old: int = 168,  # 7 days
+        country: str = None,
     ) -> List[Dict]:
         """
-        Scrape jobs from a specific platform.
+        Search for jobs using JobSpy multi-platform aggregation.
 
         Args:
-            platform_name: Name of the platform.
-            platform_config: Platform configuration dict.
-            keywords: Search keywords.
+            cv_text: Extracted CV text (used to generate search_term if not provided).
+            language: Preferred language code.
+            search_term: Direct search term (overrides CV extraction).
+            location: Job location filter.
+            job_type: Type filter (fulltime, parttime, contract, internship).
+            is_remote: Filter for remote jobs only.
+            results_wanted: Number of results per platform.
+            hours_old: Max age of job postings in hours.
+            country: Country filter for Indeed.
 
         Returns:
             List of job dictionaries.
         """
-        search_term = '+'.join(keywords[:3])
-        search_url = platform_config['search_url'].format(query=quote_plus(search_term))
+        self.logger.info("Starting job search with JobSpy")
 
-        self.logger.info(f"Scraping {platform_name}: {search_url}")
+        # Determine search term
+        if not search_term and cv_text:
+            search_term = self._build_search_term(cv_text)
 
-        html_content = self._make_request(search_url)
-        if not html_content:
+        if not search_term:
+            self.logger.error("No search term available")
             return []
 
-        soup = BeautifulSoup(html_content, 'html.parser')
+        self.logger.info(f"Search term: '{search_term}', Location: '{location}', Remote: {is_remote}")
+
+        try:
+            from jobspy import scrape_jobs
+
+            # Configure sites to search
+            sites = self.config.get('JOBSPY_SITES', ['indeed', 'linkedin', 'google', 'zip_recruiter'])
+
+            # Build scrape parameters
+            scrape_params = {
+                'site_name': sites,
+                'search_term': search_term,
+                'results_wanted': results_wanted,
+                'hours_old': hours_old,
+                'country_indeed': country or self.config.get('JOBSPY_COUNTRY', 'USA'),
+            }
+
+            if location:
+                scrape_params['location'] = location
+
+            if is_remote:
+                scrape_params['is_remote'] = True
+
+            if job_type and job_type in ('fulltime', 'parttime', 'contract', 'internship'):
+                scrape_params['job_type'] = job_type
+
+            # Google-specific search term
+            google_term = search_term
+            if location:
+                google_term = f"{search_term} jobs in {location}"
+            elif is_remote:
+                google_term = f"{search_term} remote jobs"
+            scrape_params['google_search_term'] = google_term
+
+            # Execute scrape
+            self.logger.info(f"Scraping with params: sites={sites}, term='{search_term}'")
+            jobs_df = scrape_jobs(**scrape_params)
+
+            if jobs_df is None or jobs_df.empty:
+                self.logger.warning("JobSpy returned no results")
+                return []
+
+            # Convert DataFrame to list of dicts
+            jobs = self._dataframe_to_jobs(jobs_df)
+            self.logger.info(f"Found {len(jobs)} jobs from JobSpy")
+            return jobs
+
+        except ImportError:
+            self.logger.error("python-jobspy not installed. Falling back to manual scraping.")
+            return self._fallback_scrape(search_term, location)
+        except Exception as e:
+            self.logger.error(f"JobSpy error: {str(e)}")
+            # Try fallback
+            return self._fallback_scrape(search_term, location)
+
+    def _dataframe_to_jobs(self, df) -> List[Dict]:
+        """Convert a JobSpy pandas DataFrame to a list of job dicts."""
         jobs = []
-
-        if platform_name == 'weworkremotely':
-            jobs = self._parse_weworkremotely(soup, platform_config)
-        elif platform_name == 'remoteok':
-            jobs = self._parse_remoteok(soup, platform_config)
-
-        self.logger.info(f"Found {len(jobs)} jobs on {platform_name}")
-        return jobs
-
-    def _parse_weworkremotely(
-        self, soup: BeautifulSoup, config: Dict
-    ) -> List[Dict]:
-        """Parse WeWorkRemotely job listings."""
-        jobs = []
-        selectors = config.get('selectors', {})
-
-        job_elements = soup.select(selectors.get('job_list', 'li.feature'))
-
-        for element in job_elements[:20]:  # Limit results
+        for _, row in df.iterrows():
             try:
-                title_elem = element.select_one(selectors.get('title', 'span.title'))
-                company_elem = element.select_one(selectors.get('company', 'span.company'))
-                link_elem = element.select_one('a[href]')
+                job = {
+                    'title': str(row.get('title', '')) if row.get('title') else '',
+                    'company': str(row.get('company', '')) if row.get('company') else '',
+                    'location': str(row.get('location', '')) if row.get('location') else 'Not specified',
+                    'description': str(row.get('description', ''))[:2000] if row.get('description') else '',
+                    'url': str(row.get('job_url', '')) if row.get('job_url') else '',
+                    'platform': str(row.get('site', '')).title() if row.get('site') else 'Unknown',
+                    'job_type': str(row.get('job_type', '')) if row.get('job_type') else '',
+                    'salary_range': self._format_salary(row),
+                    'date_posted': str(row.get('date_posted', '')) if row.get('date_posted') else '',
+                    'is_remote': bool(row.get('is_remote', False)),
+                    'tags': [],
+                }
 
-                if not title_elem or not company_elem:
-                    continue
-
-                title = title_elem.get_text(strip=True)
-                company = company_elem.get_text(strip=True)
-
-                url = ''
-                if link_elem and link_elem.get('href'):
-                    url = urljoin(config['base_url'], link_elem['href'])
-
-                location_elem = element.select_one(
-                    selectors.get('location', 'span.region')
-                )
-                location = location_elem.get_text(strip=True) if location_elem else 'Remote'
-
-                if title and company:
-                    jobs.append({
-                        'title': title,
-                        'company': company,
-                        'location': location,
-                        'url': url,
-                        'platform': 'WeWorkRemotely',
-                        'description': '',
-                        'tags': []
-                    })
+                # Only add jobs with at least title and company
+                if job['title'] and job['company']:
+                    jobs.append(job)
             except Exception as e:
-                self.logger.debug(f"Error parsing WWR element: {e}")
+                self.logger.debug(f"Error converting row: {e}")
                 continue
 
         return jobs
 
-    def _parse_remoteok(
-        self, soup: BeautifulSoup, config: Dict
-    ) -> List[Dict]:
-        """Parse RemoteOK job listings."""
-        jobs = []
-        selectors = config.get('selectors', {})
+    def _format_salary(self, row) -> str:
+        """Format salary range from DataFrame row."""
+        try:
+            min_amount = row.get('min_amount')
+            max_amount = row.get('max_amount')
+            interval = row.get('interval', '')
+            currency = row.get('currency', 'USD')
 
-        job_elements = soup.select(selectors.get('job_list', 'tr.job'))
+            if min_amount and max_amount:
+                return f"{currency} {int(min_amount):,} - {int(max_amount):,} / {interval}"
+            elif min_amount:
+                return f"{currency} {int(min_amount):,}+ / {interval}"
+            elif max_amount:
+                return f"Up to {currency} {int(max_amount):,} / {interval}"
+            return ''
+        except (ValueError, TypeError):
+            return ''
 
-        for element in job_elements[:20]:  # Limit results
-            try:
-                title_elem = element.select_one(
-                    selectors.get('title', 'td.company_and_position h2')
-                )
-                company_elem = element.select_one(
-                    selectors.get('company', 'td.company_and_position h3')
-                )
+    def _build_search_term(self, cv_text: str) -> str:
+        """
+        Build an effective search term from CV text.
 
-                if not title_elem or not company_elem:
-                    continue
+        Extracts the most relevant job title/role keywords.
+        """
+        if not cv_text or not isinstance(cv_text, str):
+            return ''
 
-                title = title_elem.get_text(strip=True)
-                company = company_elem.get_text(strip=True)
+        cv_lower = cv_text.lower().strip()
 
-                # Get job URL
-                url = ''
-                link_elem = element.select_one('a[href*="/remote-jobs/"]')
-                if link_elem and link_elem.get('href'):
-                    url = urljoin(config['base_url'], link_elem['href'])
+        # Try to find explicit job titles first
+        title_patterns = [
+            r'(?:software|senior|junior|lead|principal|staff)\s+(?:engineer|developer|architect)',
+            r'(?:full[- ]?stack|front[- ]?end|back[- ]?end)\s+(?:developer|engineer)',
+            r'(?:data|ml|machine learning|ai)\s+(?:scientist|engineer|analyst)',
+            r'(?:devops|sre|cloud|platform)\s+engineer',
+            r'(?:product|project|program)\s+manager',
+            r'(?:ux|ui|graphic|web)\s+designer',
+            r'(?:qa|test|quality)\s+(?:engineer|analyst|automation)',
+            r'(?:mobile|ios|android)\s+(?:developer|engineer)',
+            r'(?:security|cyber)\s+(?:engineer|analyst)',
+            r'(?:systems?|network)\s+(?:administrator|engineer)',
+            r'business\s+analyst',
+            r'scrum\s+master',
+            r'technical\s+(?:writer|lead)',
+        ]
 
-                # Get tags
-                tag_elems = element.select(
-                    selectors.get('tags', 'td.tags span')
-                )
-                tags = [t.get_text(strip=True) for t in tag_elems]
+        for pattern in title_patterns:
+            matches = re.findall(pattern, cv_lower)
+            if matches:
+                return matches[0].title()
 
-                location_elem = element.select_one(
-                    selectors.get('location', 'td.location')
-                )
-                location = location_elem.get_text(strip=True) if location_elem else 'Remote'
+        # Extract key technical skills
+        keywords = self._extract_keywords(cv_text)
+        if keywords:
+            # Use top 2-3 keywords as search term
+            return ' '.join(keywords[:3])
 
-                if title and company:
-                    jobs.append({
-                        'title': title,
-                        'company': company,
-                        'location': location,
-                        'url': url,
-                        'platform': 'RemoteOK',
-                        'description': '',
-                        'tags': tags
-                    })
-            except Exception as e:
-                self.logger.debug(f"Error parsing RemoteOK element: {e}")
-                continue
-
-        return jobs
+        return 'software developer'  # Default fallback
 
     def _extract_keywords(self, cv_text: str) -> List[str]:
         """
         Extract relevant search keywords from CV text.
 
-        Args:
-            cv_text: CV text content.
-
-        Returns:
-            List of top keywords for job searching (max 5).
+        Returns top keywords suitable for job searching.
         """
         if isinstance(cv_text, list):
             cv_text = ' '.join(cv_text)
@@ -378,13 +238,13 @@ class JobScraper:
             'express', 'django', 'flask', 'spring', 'sql', 'mysql', 'postgresql',
             'mongodb', 'aws', 'azure', 'gcp', 'docker', 'kubernetes', 'git',
             'rest', 'graphql', 'api', 'microservices', 'typescript', 'php',
-            'ruby', 'rails', 'go', 'rust', 'c++', 'c#', '.net', 'devops',
-            'linux', 'terraform', 'jenkins', 'ci/cd', 'agile', 'scrum',
-            'tensorflow', 'pytorch', 'pandas', 'data science', 'machine learning',
-            'deep learning', 'redis', 'kafka', 'elasticsearch', 'blockchain',
-            'mobile', 'ios', 'android', 'react native', 'flutter', 'swift',
-            'kotlin', 'html', 'css', 'tailwind', 'sass', 'webpack',
-            'nextjs', 'nuxt', 'svelte', 'figma', 'ux', 'ui',
+            'ruby', 'rails', 'go', 'rust', 'devops', 'linux', 'terraform',
+            'jenkins', 'agile', 'scrum', 'tensorflow', 'pytorch', 'pandas',
+            'redis', 'kafka', 'elasticsearch', 'mobile', 'ios', 'android',
+            'react native', 'flutter', 'swift', 'kotlin', 'html', 'css',
+            'tailwind', 'webpack', 'nextjs', 'nuxt', 'svelte', 'figma',
+            'salesforce', 'sap', 'power bi', 'tableau', 'excel', 'marketing',
+            'seo', 'analytics', 'blockchain', 'solidity', 'web3',
         }
 
         # Find technical keywords in CV
@@ -392,29 +252,89 @@ class JobScraper:
         found_technical = [w for w in words if w in technical_keywords]
 
         # Also check multi-word skills
-        for skill in technical_keywords:
-            if ' ' in skill and skill in cv_text:
-                found_technical.append(skill.replace(' ', '+'))
+        for skill in ['react native', 'machine learning', 'data science',
+                      'deep learning', 'power bi', 'full stack']:
+            if skill in cv_text:
+                found_technical.append(skill.replace(' ', '-'))
 
         if found_technical:
-            # Return most common technical keywords
-            from collections import Counter
-            # Count occurrences in the text
             counts = Counter()
             for word in found_technical:
                 counts[word] = cv_text.count(word)
             return [w for w, _ in counts.most_common(5)]
 
-        # Fallback: use most common significant words
+        # Fallback
         stop_words = {
             'the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have',
             'it', 'for', 'not', 'on', 'with', 'as', 'you', 'do', 'at',
             'this', 'but', 'by', 'from', 'or', 'an', 'will', 'my',
             'de', 'la', 'el', 'en', 'y', 'que', 'es', 'un', 'con', 'por',
+            'work', 'experience', 'company', 'year', 'team', 'project',
         }
-
         all_words = re.findall(r'\b[a-z]{4,}\b', cv_text)
         filtered = [w for w in all_words if w not in stop_words]
         word_freq = Counter(filtered)
-
         return [w for w, _ in word_freq.most_common(5)]
+
+    def _fallback_scrape(self, search_term: str, location: str = None) -> List[Dict]:
+        """
+        Fallback scraper using direct HTTP requests to RemoteOK API.
+
+        Used when JobSpy is not available or fails.
+        """
+        import requests
+        from fake_useragent import UserAgent
+
+        self.logger.info(f"Fallback: Scraping RemoteOK for '{search_term}'")
+        jobs = []
+
+        try:
+            ua = UserAgent(fallback='Mozilla/5.0')
+            headers = {
+                'User-Agent': ua.random,
+                'Accept': 'application/json',
+            }
+
+            # RemoteOK has a JSON API
+            url = f"https://remoteok.com/api?tag={search_term.replace(' ', '+')}"
+            response = requests.get(url, headers=headers, timeout=15)
+
+            if response.status_code == 200:
+                data = response.json()
+                # First item is metadata, skip it
+                for item in data[1:30]:  # Limit to 30
+                    if isinstance(item, dict) and item.get('position'):
+                        job = {
+                            'title': item.get('position', ''),
+                            'company': item.get('company', ''),
+                            'location': item.get('location', 'Remote'),
+                            'description': (item.get('description', '') or '')[:1500],
+                            'url': item.get('url', f"https://remoteok.com/remote-jobs/{item.get('id', '')}"),
+                            'platform': 'RemoteOK',
+                            'job_type': 'fulltime',
+                            'salary_range': self._format_remoteok_salary(item),
+                            'date_posted': item.get('date', ''),
+                            'is_remote': True,
+                            'tags': item.get('tags', []) or [],
+                        }
+                        if job['title'] and job['company']:
+                            jobs.append(job)
+
+            self.logger.info(f"Fallback found {len(jobs)} jobs")
+        except Exception as e:
+            self.logger.error(f"Fallback scrape error: {e}")
+
+        return jobs
+
+    def _format_remoteok_salary(self, item: dict) -> str:
+        """Format salary from RemoteOK API response."""
+        try:
+            sal_min = item.get('salary_min')
+            sal_max = item.get('salary_max')
+            if sal_min and sal_max:
+                return f"USD {int(sal_min):,} - {int(sal_max):,} / year"
+            elif sal_min:
+                return f"USD {int(sal_min):,}+ / year"
+            return ''
+        except (ValueError, TypeError):
+            return ''
