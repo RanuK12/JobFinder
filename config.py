@@ -57,28 +57,15 @@ class Config:
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
     ALLOWED_EXTENSIONS = {'pdf', 'docx'}
 
-    # Scraping settings
+    # JobSpy settings (multi-platform job scraping)
+    JOBSPY_SITES = ['indeed', 'linkedin', 'google', 'zip_recruiter']
+    JOBSPY_COUNTRY = os.environ.get('JOBSPY_COUNTRY', 'USA')
+    JOBSPY_RESULTS_WANTED = int(os.environ.get('JOBSPY_RESULTS_WANTED', 25))
+    JOBSPY_HOURS_OLD = int(os.environ.get('JOBSPY_HOURS_OLD', 168))  # 7 days
+
+    # Scraping settings (fallback)
     SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 30))
-    SCRAPING_DELAY = (2, 5)  # Random delay range in seconds
     MAX_RETRIES = 3
-    MAX_JOBS_PER_PLATFORM = 20
-
-    # Proxy settings
-    USE_PROXY = False
-    PROXY_LIST = []
-
-    # Selenium settings
-    SELENIUM_OPTIONS = [
-        '--headless',
-        '--no-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-gpu',
-        '--disable-notifications',
-        '--disable-infobars',
-        '--disable-extensions',
-        '--disable-popup-blocking',
-        '--disable-blink-features=AutomationControlled'
-    ]
 
     # Cache settings
     CACHE_TYPE = os.environ.get('CACHE_TYPE', 'SimpleCache')
@@ -92,52 +79,6 @@ class Config:
     # Logging
     LOG_DIR = str(BASE_DIR / 'static' / 'logs')
     LOG_LEVEL = os.environ.get('LOG_LEVEL', 'INFO')
-
-    # Platform configurations for job scraping
-    PLATFORMS = {
-        'weworkremotely': {
-            'enabled': True,
-            'base_url': 'https://weworkremotely.com',
-            'search_url': 'https://weworkremotely.com/remote-jobs/search?term={query}',
-            'requires_selenium': False,
-            'selectors': {
-                'job_list': 'li.feature',
-                'title': 'span.title',
-                'company': 'span.company',
-                'location': 'span.region',
-                'description': 'span.description',
-                'url': 'a',
-                'posted_date': 'time',
-                'tags': 'span.tags'
-            },
-            'pagination': {
-                'enabled': True,
-                'max_pages': 3,
-                'selector': 'a.next_page'
-            }
-        },
-        'remoteok': {
-            'enabled': True,
-            'base_url': 'https://remoteok.com',
-            'search_url': 'https://remoteok.com/remote-{query}-jobs',
-            'requires_selenium': False,
-            'selectors': {
-                'job_list': 'tr.job',
-                'title': 'td.company_and_position h2',
-                'company': 'td.company_and_position h3',
-                'location': 'td.location',
-                'description': 'td.description',
-                'url': 'td.source a',
-                'posted_date': 'td.time',
-                'tags': 'td.tags span'
-            },
-            'pagination': {
-                'enabled': True,
-                'max_pages': 3,
-                'selector': 'a.next_page'
-            }
-        },
-    }
 
     @staticmethod
     def init_app(app):
