@@ -2,141 +2,153 @@
 {% set title = _('Editar Perfil') %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+<div class="max-w-3xl mx-auto">
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-6 flex-wrap gap-3 animate-fade-in">
         <div>
-            <h1 class="text-2xl font-bold text-primary">
-                <i class="fas fa-user-edit mr-2"></i>{{ _('Editar mi Perfil') }}
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+                {{ _('Editar mi Perfil') }}
             </h1>
-            <p class="text-gray-500 text-sm mt-1">
+            <p class="text-slate-500 text-sm mt-1">
                 {{ _('Tu perfil es tu vidriera profesional. Hazlo brillar.') }}
             </p>
         </div>
         {% if user.username %}
         <a href="{{ url_for('public_profile', username=user.username) }}"
-           class="bg-purple-50 border border-purple-200 text-purple-700 px-4 py-2 rounded-lg hover:bg-purple-100 transition flex items-center gap-2 text-sm">
-            <i class="fas fa-eye"></i>{{ _('Ver perfil público') }}
+           class="button-secondary text-xs">
+            <i class="fas fa-eye text-[10px]"></i>{{ _('Ver perfil público') }}
         </a>
         {% endif %}
     </div>
 
-    <form method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data" class="space-y-6">
+    <form method="POST" action="{{ url_for('update_profile') }}" enctype="multipart/form-data" class="space-y-5">
 
         {# Section: Photo + Basic info #}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-id-badge mr-2 text-purple-500"></i>{{ _('Información básica') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.05s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-5 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-id-badge text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Información básica') }}
             </h2>
 
             <div class="flex flex-col sm:flex-row gap-6 mb-6">
                 {# Profile picture #}
-                <div class="flex flex-col items-center">
+                <div class="flex flex-col items-center shrink-0">
                     <div class="relative group">
                         <img id="profile-preview"
                              src="{{ url_for('static', filename=user.profile_picture or 'profiles/default-profile.jpg') }}"
-                             class="w-32 h-32 rounded-full border-4 border-purple-200 shadow-lg object-cover">
+                             class="w-28 h-28 rounded-2xl border-2 border-slate-200 shadow-sm object-cover group-hover:border-primary-300 transition">
                         <label for="profile-pic-input"
-                               class="absolute inset-0 bg-black bg-opacity-50 rounded-full opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer">
-                            <i class="fas fa-camera text-white text-2xl"></i>
+                               class="absolute inset-0 bg-slate-900/60 rounded-2xl opacity-0 group-hover:opacity-100 transition-all flex items-center justify-center cursor-pointer backdrop-blur-[1px]">
+                            <div class="text-center text-white">
+                                <i class="fas fa-camera text-lg"></i>
+                                <p class="text-[10px] mt-1 font-medium">{{ _('Cambiar') }}</p>
+                            </div>
                         </label>
                         <input type="file" id="profile-pic-input" name="profile_picture"
                                accept="image/*" class="hidden" onchange="previewImage(event)">
                     </div>
-                    <p class="text-xs text-gray-500 mt-2">{{ _('Click para cambiar') }}</p>
                 </div>
 
                 {# Name + headline #}
                 <div class="flex-1 space-y-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
-                            {{ _('Nombre completo') }} *
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
+                            {{ _('Nombre completo') }} <span class="text-red-400">*</span>
                         </label>
                         <input type="text" name="full_name" required
                                value="{{ user.full_name }}"
-                               class="form-input w-full p-3">
+                               class="form-input w-full">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
                             {{ _('Titular profesional') }}
                         </label>
                         <input type="text" name="headline"
                                value="{{ user.headline or '' }}"
                                placeholder="{{ _('Ej: Senior Python Developer | Open to remote opportunities') }}"
                                maxlength="200"
-                               class="form-input w-full p-3">
-                        <p class="text-xs text-gray-400 mt-1">{{ _('Una frase que te describa profesionalmente') }}</p>
+                               class="form-input w-full">
+                        <p class="text-[11px] text-slate-400 mt-1">{{ _('Una frase que te describa profesionalmente') }}</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">
+                        <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
                             {{ _('Nombre de usuario (URL pública)') }}
                         </label>
-                        <div class="flex items-center bg-gray-50 border border-gray-200 rounded-lg overflow-hidden">
-                            <span class="px-3 py-2.5 text-sm text-gray-500 bg-gray-100 border-r border-gray-200">
+                        <div class="flex items-center border border-slate-200 rounded-xl overflow-hidden focus-within:border-primary-400 focus-within:ring-4 focus-within:ring-primary-500/10 transition-all">
+                            <span class="px-3 py-2.5 text-xs text-slate-400 bg-slate-50 border-r border-slate-200 whitespace-nowrap">
                                 {{ request.host }}/u/
                             </span>
                             <input type="text" name="username"
                                    value="{{ user.username or '' }}"
                                    pattern="[a-z0-9-]+"
                                    maxlength="50"
-                                   class="flex-1 p-2.5 bg-transparent border-0 focus:outline-none text-sm">
+                                   class="flex-1 px-3 py-2.5 bg-transparent border-0 focus:outline-none text-sm">
                         </div>
-                        <p class="text-xs text-gray-400 mt-1">{{ _('Solo minúsculas, números y guiones') }}</p>
+                        <p class="text-[11px] text-slate-400 mt-1">{{ _('Solo minúsculas, números y guiones') }}</p>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fas fa-map-marker-alt mr-1"></i>{{ _('Ubicación') }}
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
+                        <i class="fas fa-map-marker-alt mr-1 text-primary-400"></i>{{ _('Ubicación') }}
                     </label>
                     <input type="text" name="location"
                            value="{{ user.location or '' }}"
                            placeholder="{{ _('Ej: Buenos Aires, Argentina') }}"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fas fa-briefcase mr-1"></i>{{ _('Años de experiencia') }}
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5 uppercase tracking-wide">
+                        <i class="fas fa-briefcase mr-1 text-primary-400"></i>{{ _('Años de experiencia') }}
                     </label>
                     <input type="number" name="years_experience"
                            value="{{ user.years_experience or 0 }}"
                            min="0" max="60"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
             </div>
         </section>
 
         {# Section: About #}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-pen-to-square mr-2 text-purple-500"></i>{{ _('Sobre mí') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.1s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-pen text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Sobre mí') }}
             </h2>
-            <textarea name="bio" rows="6"
+            <textarea name="bio" rows="5"
                       placeholder="{{ _('Cuenta tu historia profesional. Tus logros, tu forma de trabajar, lo que te apasiona...') }}"
-                      class="form-input w-full p-3 resize-y">{{ user.bio or '' }}</textarea>
-            <p class="text-xs text-gray-400 mt-1">
-                {{ _('Tip: Esto aparece en tu perfil público. Sé auténtico/a.') }}
+                      class="form-input w-full resize-y min-h-[120px]">{{ user.bio or '' }}</textarea>
+            <p class="text-[11px] text-slate-400 mt-1.5">
+                <i class="fas fa-lightbulb text-amber-300 mr-1"></i>{{ _('Tip: Esto aparece en tu perfil público. Sé auténtico/a.') }}
             </p>
         </section>
 
         {# Section: Skills #}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-tools mr-2 text-purple-500"></i>{{ _('Habilidades') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.15s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-tools text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Habilidades') }}
             </h2>
             <input type="text" name="skills"
                    value="{{ user.skills or '' }}"
                    placeholder="{{ _('Python, React, AWS, Docker, SQL, Project Management') }}"
-                   class="form-input w-full p-3">
-            <p class="text-xs text-gray-400 mt-1">
+                   class="form-input w-full">
+            <p class="text-[11px] text-slate-400 mt-1.5">
                 {{ _('Separa cada habilidad con coma. Mejora el matching de trabajos.') }}
             </p>
 
             {% if user.skill_list %}
             <div class="flex flex-wrap gap-2 mt-3">
                 {% for skill in user.skill_list %}
-                <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">
+                <span class="px-3 py-1 bg-primary-50 text-primary-700 rounded-lg text-xs font-medium border border-primary-100">
                     {{ skill }}
                 </span>
                 {% endfor %}
@@ -145,88 +157,99 @@
         </section>
 
         {# Section: CV upload #}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-file-pdf mr-2 text-purple-500"></i>{{ _('CV / Resume') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-file-pdf text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('CV / Resume') }}
             </h2>
 
             {% if user.cv_url %}
-            <div class="bg-purple-50 border border-purple-200 rounded-lg p-3 mb-3 flex items-center justify-between">
+            <div class="bg-emerald-50 border border-emerald-200/60 rounded-xl p-3 mb-4 flex items-center justify-between">
                 <div class="flex items-center gap-2 text-sm">
-                    <i class="fas fa-file-pdf text-purple-600"></i>
-                    <span class="text-gray-700">{{ _('CV actual disponible') }}</span>
+                    <div class="w-8 h-8 bg-emerald-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-file-pdf text-emerald-600 text-xs"></i>
+                    </div>
+                    <span class="text-emerald-700 font-medium text-xs">{{ _('CV actual disponible') }}</span>
                 </div>
                 <a href="{{ url_for('static', filename=user.cv_url) }}" target="_blank"
-                   class="text-purple-600 hover:underline text-sm flex items-center gap-1">
-                    <i class="fas fa-eye"></i>{{ _('Ver') }}
+                   class="text-emerald-600 hover:text-emerald-700 text-xs font-medium flex items-center gap-1">
+                    <i class="fas fa-eye text-[10px]"></i>{{ _('Ver') }}
                 </a>
             </div>
             {% endif %}
 
             <input type="file" name="cv_file" accept=".pdf,.docx"
-                   class="form-input w-full p-3 cursor-pointer">
-            <p class="text-xs text-gray-400 mt-1">
+                   class="form-input w-full cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100">
+            <p class="text-[11px] text-slate-400 mt-1.5">
                 {{ _('PDF o DOCX. Será visible/descargable en tu perfil público.') }}
             </p>
         </section>
 
         {# Section: Social links #}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-link mr-2 text-purple-500"></i>{{ _('Enlaces y redes') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.25s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-link text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Enlaces y redes') }}
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fab fa-linkedin text-blue-600 mr-1"></i>LinkedIn
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <i class="fab fa-linkedin text-[#0A66C2] mr-1"></i>LinkedIn
                     </label>
                     <input type="url" name="linkedin_url"
                            value="{{ user.linkedin_url or '' }}"
                            placeholder="https://linkedin.com/in/tunombre"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fab fa-github text-gray-800 mr-1"></i>GitHub
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <i class="fab fa-github text-slate-700 mr-1"></i>GitHub
                     </label>
                     <input type="url" name="github_url"
                            value="{{ user.github_url or '' }}"
                            placeholder="https://github.com/tuusuario"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fas fa-globe text-purple-600 mr-1"></i>{{ _('Portfolio / Web') }}
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <i class="fas fa-globe text-primary-500 mr-1"></i>{{ _('Portfolio / Web') }}
                     </label>
                     <input type="url" name="portfolio_url"
                            value="{{ user.portfolio_url or '' }}"
                            placeholder="https://tu-portfolio.com"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fab fa-x-twitter text-gray-800 mr-1"></i>Twitter / X
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">
+                        <i class="fab fa-x-twitter text-slate-700 mr-1"></i>Twitter / X
                     </label>
                     <input type="url" name="twitter_url"
                            value="{{ user.twitter_url or '' }}"
                            placeholder="https://x.com/tuusuario"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
             </div>
         </section>
 
         {# Section: Job preferences (candidate) or company info (employer) #}
         {% if user.user_type == 'candidate' %}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-cog mr-2 text-purple-500"></i>{{ _('Preferencias laborales') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.3s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-cog text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Preferencias laborales') }}
             </h2>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Tipo preferido') }}</label>
-                    <select name="preferred_job_type" class="form-input w-full p-3">
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ _('Tipo preferido') }}</label>
+                    <select name="preferred_job_type" class="form-input w-full">
                         <option value="" {{ 'selected' if not user.preferred_job_type }}>{{ _('Sin preferencia') }}</option>
                         <option value="fulltime" {{ 'selected' if user.preferred_job_type == 'fulltime' }}>{{ _('Tiempo completo') }}</option>
                         <option value="parttime" {{ 'selected' if user.preferred_job_type == 'parttime' }}>{{ _('Medio tiempo') }}</option>
@@ -235,87 +258,95 @@
                     </select>
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Salario esperado') }}</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ _('Salario esperado') }}</label>
                     <input type="text" name="expected_salary"
                            value="{{ user.expected_salary or '' }}"
                            placeholder="{{ _('Ej: USD 60k-90k / año') }}"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
             </div>
 
-            <div class="space-y-2">
-                <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+            <div class="space-y-2.5">
+                <label class="flex items-center gap-3 p-3.5 bg-primary-50/50 rounded-xl cursor-pointer border border-primary-100/60 hover:border-primary-200 transition">
                     <input type="checkbox" name="preferred_remote"
                            {{ 'checked' if user.preferred_remote }}
-                           class="h-5 w-5 text-purple-600 rounded">
+                           class="w-4 h-4 text-primary-500 focus:ring-primary-400 border-slate-300 rounded">
                     <div>
-                        <span class="font-medium text-gray-700">{{ _('Solo remoto') }}</span>
-                        <p class="text-xs text-gray-500">{{ _('Solo me interesan trabajos 100% a distancia') }}</p>
+                        <span class="font-medium text-slate-700 text-sm">{{ _('Solo remoto') }}</span>
+                        <p class="text-[11px] text-slate-500">{{ _('Solo me interesan trabajos 100% a distancia') }}</p>
                     </div>
                 </label>
 
-                <label class="flex items-center gap-3 p-3 bg-green-50 rounded-lg cursor-pointer">
+                <label class="flex items-center gap-3 p-3.5 bg-emerald-50/50 rounded-xl cursor-pointer border border-emerald-100/60 hover:border-emerald-200 transition">
                     <input type="checkbox" name="open_to_work"
                            {{ 'checked' if user.open_to_work }}
-                           class="h-5 w-5 text-green-600 rounded">
+                           class="w-4 h-4 text-emerald-500 focus:ring-emerald-400 border-slate-300 rounded">
                     <div>
-                        <span class="font-medium text-gray-700">{{ _('Abierto/a a oportunidades') }}</span>
-                        <p class="text-xs text-gray-500">{{ _('Muestra el badge "Open to work" en tu perfil') }}</p>
+                        <span class="font-medium text-slate-700 text-sm">{{ _('Abierto/a a oportunidades') }}</span>
+                        <p class="text-[11px] text-slate-500">{{ _('Muestra el badge "Open to work" en tu perfil') }}</p>
                     </div>
                 </label>
             </div>
         </section>
         {% elif user.user_type == 'employer' %}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-building mr-2 text-purple-500"></i>{{ _('Información de empresa') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.3s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-building text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Información de empresa') }}
             </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Nombre de empresa') }}</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ _('Nombre de empresa') }}</label>
                     <input type="text" name="company_name"
                            value="{{ user.company_name or '' }}"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ _('Sitio web') }}</label>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1.5">{{ _('Sitio web') }}</label>
                     <input type="url" name="company_website"
                            value="{{ user.company_website or '' }}"
                            placeholder="https://miempresa.com"
-                           class="form-input w-full p-3">
+                           class="form-input w-full">
                 </div>
             </div>
         </section>
         {% endif %}
 
         {# Section: Privacy #}
-        <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-            <h2 class="text-lg font-bold text-gray-800 mb-4">
-                <i class="fas fa-shield-halved mr-2 text-purple-500"></i>{{ _('Privacidad') }}
+        <section class="bg-white rounded-2xl border border-slate-200/80 p-6 animate-fade-in-up" style="animation-delay: 0.35s;">
+            <h2 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2 uppercase tracking-wide">
+                <div class="w-6 h-6 bg-primary-50 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-shield-halved text-primary-500 text-[10px]"></i>
+                </div>
+                {{ _('Privacidad') }}
             </h2>
-            <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-lg cursor-pointer">
+            <label class="flex items-center gap-3 p-3.5 bg-slate-50 rounded-xl cursor-pointer border border-slate-100 hover:border-slate-200 transition">
                 <input type="checkbox" name="is_public"
                        {{ 'checked' if user.is_public }}
-                       class="h-5 w-5 text-purple-600 rounded">
+                       class="w-4 h-4 text-primary-500 focus:ring-primary-400 border-slate-300 rounded">
                 <div>
-                    <span class="font-medium text-gray-700">{{ _('Perfil público') }}</span>
-                    <p class="text-xs text-gray-500">
+                    <span class="font-medium text-slate-700 text-sm">{{ _('Perfil público') }}</span>
+                    <p class="text-[11px] text-slate-500">
                         {{ _('Si está activo, cualquiera puede ver tu perfil en /u/<usuario>') }}
                     </p>
                 </div>
             </label>
         </section>
 
-        {# Submit #}
-        <div class="flex flex-col sm:flex-row gap-3 sticky bottom-4 z-10 bg-gray-50/95 backdrop-blur-sm p-3 rounded-lg shadow-md border border-gray-200">
-            <button type="submit" name="next" value="edit" class="primary-bg text-white px-6 py-3 rounded-lg flex items-center justify-center gap-2 flex-1">
-                <i class="fas fa-save"></i>{{ _('Guardar cambios') }}
-            </button>
-            {% if user.username %}
-            <button type="submit" name="next" value="public" class="bg-white border border-purple-300 text-purple-700 px-6 py-3 rounded-lg hover:bg-purple-50 transition flex items-center justify-center gap-2">
-                <i class="fas fa-eye"></i>{{ _('Guardar y ver perfil') }}
-            </button>
-            {% endif %}
+        {# Sticky save bar #}
+        <div class="sticky bottom-4 z-10 animate-fade-in-up" style="animation-delay: 0.4s;">
+            <div class="flex flex-col sm:flex-row gap-2.5 bg-white/95 backdrop-blur-md p-3.5 rounded-2xl shadow-medium border border-slate-200/80">
+                <button type="submit" name="next" value="edit" class="button-primary flex-1 py-3 text-sm">
+                    <i class="fas fa-save text-xs"></i>{{ _('Guardar cambios') }}
+                </button>
+                {% if user.username %}
+                <button type="submit" name="next" value="public" class="button-secondary flex-1 sm:flex-none py-3 text-sm">
+                    <i class="fas fa-eye text-xs"></i>{{ _('Guardar y ver perfil') }}
+                </button>
+                {% endif %}
+            </div>
         </div>
     </form>
 </div>
