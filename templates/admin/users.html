@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% set title = _('Gestionar Usuarios') %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex items-center justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-primary">
+                <i class="fas fa-users-cog mr-2"></i>{{ _('Gestionar Usuarios') }}
+            </h1>
+            <p class="text-gray-600 mt-1">{{ users|length }} {{ _('usuarios registrados') }}</p>
+        </div>
+        <div class="flex gap-3">
+            <a href="{{ url_for('admin_create_user') }}" class="primary-bg text-white px-4 py-2 rounded-lg flex items-center gap-2">
+                <i class="fas fa-user-plus"></i>{{ _('Crear Usuario') }}
+            </a>
+            <a href="{{ url_for('admin_dashboard') }}" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-lg flex items-center gap-2">
+                <i class="fas fa-arrow-left"></i>{{ _('Volver') }}
+            </a>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ _('Usuario') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ _('Email') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ _('Tipo') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ _('Estado') }}</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{{ _('Registro') }}</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{{ _('Acciones') }}</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for user in users %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="px-4 py-3">
+                            <div class="flex items-center gap-3">
+                                <img src="{{ url_for('static', filename=user.profile_picture or 'profiles/default-profile.jpg') }}" 
+                                     class="w-8 h-8 rounded-full object-cover">
+                                <span class="font-medium text-gray-800 text-sm">{{ user.full_name }}</span>
+                            </div>
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-600">{{ user.email }}</td>
+                        <td class="px-4 py-3">
+                            <span class="text-xs px-2 py-1 rounded-full 
+                                {% if user.user_type == 'admin' %}bg-red-100 text-red-700
+                                {% elif user.user_type == 'employer' %}bg-blue-100 text-blue-700
+                                {% else %}bg-green-100 text-green-700{% endif %}">
+                                {{ user.user_type }}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3">
+                            {% if user.is_active_user %}
+                            <span class="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">{{ _('Activo') }}</span>
+                            {% else %}
+                            <span class="text-xs px-2 py-1 rounded-full bg-red-100 text-red-700">{{ _('Inactivo') }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-4 py-3 text-sm text-gray-500">
+                            {{ user.created_at.strftime('%d/%m/%Y') if user.created_at else '-' }}
+                        </td>
+                        <td class="px-4 py-3 text-right">
+                            <div class="flex items-center justify-end gap-2" x-data="{ openMenu: false }">
+                                <button @click="openMenu = !openMenu" class="text-gray-400 hover:text-primary p-1 rounded">
+                                    <i class="fas fa-ellipsis-v"></i>
+                                </button>
+                                <div x-show="openMenu" x-cloak @click.away="openMenu = false"
+                                     class="absolute right-8 mt-32 bg-white rounded-lg shadow-xl border border-gray-100 py-2 w-48 z-50">
+                                    
+                                    <!-- Toggle Active -->
+                                    <form method="POST" action="{{ url_for('admin_toggle_user', user_id=user.id) }}">
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2">
+                                            {% if user.is_active_user %}
+                                            <i class="fas fa-ban text-orange-500"></i>{{ _('Desactivar') }}
+                                            {% else %}
+                                            <i class="fas fa-check text-green-500"></i>{{ _('Activar') }}
+                                            {% endif %}
+                                        </button>
+                                    </form>
+
+                                    <!-- Change Type -->
+                                    <form method="POST" action="{{ url_for('admin_change_user_type', user_id=user.id) }}" class="px-4 py-2">
+                                        <select name="user_type" onchange="this.form.submit()" class="text-xs border rounded px-2 py-1 w-full">
+                                            <option value="">{{ _('Cambiar tipo...') }}</option>
+                                            <option value="candidate">Candidate</option>
+                                            <option value="employer">Employer</option>
+                                            <option value="admin">Admin</option>
+                                        </select>
+                                    </form>
+
+                                    <!-- Reset Password -->
+                                    <form method="POST" action="{{ url_for('admin_reset_password', user_id=user.id) }}" 
+                                          class="px-4 py-2" onsubmit="return confirm('{{ _('¿Resetear contraseña?') }}')">
+                                        <input type="hidden" name="new_password" value="NewPass123!">
+                                        <button type="submit" class="w-full text-left text-sm flex items-center gap-2 text-yellow-600">
+                                            <i class="fas fa-key"></i>{{ _('Reset Pass (NewPass123!)') }}
+                                        </button>
+                                    </form>
+
+                                    <!-- Delete -->
+                                    {% if user.id != current_user.id %}
+                                    <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}"
+                                          onsubmit="return confirm('{{ _('¿Eliminar este usuario? Esta acción no se puede deshacer.') }}')">
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm hover:bg-red-50 flex items-center gap-2 text-red-600">
+                                            <i class="fas fa-trash"></i>{{ _('Eliminar') }}
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

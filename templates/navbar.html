@@ -10,6 +10,14 @@
             <!-- Desktop Menu -->
             <div class="hidden md:flex items-center gap-6">
                 {% if current_user.is_authenticated %}
+                    {% if current_user.user_type == 'admin' %}
+                    <a href="{{ url_for('admin_dashboard') }}" class="text-gray-600 hover:text-primary transition text-sm font-medium">
+                        <i class="fas fa-shield-alt mr-1"></i>{{ _('Admin') }}
+                    </a>
+                    {% endif %}
+                    <a href="{{ url_for('job_listings') }}" class="text-gray-600 hover:text-primary transition text-sm font-medium">
+                        <i class="fas fa-list mr-1"></i>{{ _('Ofertas') }}
+                    </a>
                     <a href="{{ url_for('index') }}" class="text-gray-600 hover:text-primary transition text-sm font-medium">
                         <i class="fas fa-search mr-1"></i>{{ _('Buscar') }}
                     </a>
@@ -42,6 +50,12 @@
                                 <i class="fas fa-file-alt w-4"></i>{{ _('Postulaciones') }}
                             </a>
                             {% endif %}
+                            {% if current_user.user_type == 'admin' %}
+                            <a href="{{ url_for('admin_dashboard') }}" 
+                               class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 transition text-sm">
+                                <i class="fas fa-shield-alt w-4"></i>{{ _('Panel Admin') }}
+                            </a>
+                            {% endif %}
                             <hr class="my-2 border-gray-100">
                             <a href="{{ url_for('logout') }}" 
                                class="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 transition text-sm">
@@ -50,6 +64,9 @@
                         </div>
                     </div>
                 {% else %}
+                    <a href="{{ url_for('job_listings') }}" class="text-gray-600 hover:text-primary transition text-sm font-medium">
+                        <i class="fas fa-list mr-1"></i>{{ _('Ofertas') }}
+                    </a>
                     <a href="{{ url_for('login') }}" class="text-gray-600 hover:text-primary transition text-sm font-medium">
                         {{ _('Iniciar Sesión') }}
                     </a>
@@ -63,7 +80,7 @@
             <!-- Mobile Toggle -->
             <button @click="mobile = !mobile" class="md:hidden text-gray-600 hover:text-primary focus:outline-none"
                     aria-label="Toggle menu">
-                <i class="fas" :class="mobile ? 'fa-times' : 'fa-bars'" class="text-xl"></i>
+                <i class="fas text-xl" :class="mobile ? 'fa-times' : 'fa-bars'"></i>
             </button>
         </div>
 
@@ -78,6 +95,14 @@
                         <p class="text-xs text-gray-500">{{ current_user.email }}</p>
                     </div>
                 </div>
+                {% if current_user.user_type == 'admin' %}
+                <a href="{{ url_for('admin_dashboard') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
+                    <i class="fas fa-shield-alt mr-2"></i>{{ _('Panel Admin') }}
+                </a>
+                {% endif %}
+                <a href="{{ url_for('job_listings') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
+                    <i class="fas fa-list mr-2"></i>{{ _('Ofertas') }}
+                </a>
                 <a href="{{ url_for('index') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
                     <i class="fas fa-search mr-2"></i>{{ _('Buscar Trabajos') }}
                 </a>
@@ -88,6 +113,9 @@
                     <i class="fas fa-sign-out-alt mr-2"></i>{{ _('Cerrar Sesión') }}
                 </a>
             {% else %}
+                <a href="{{ url_for('job_listings') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
+                    <i class="fas fa-list mr-2"></i>{{ _('Ofertas') }}
+                </a>
                 <a href="{{ url_for('login') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
                     <i class="fas fa-sign-in-alt mr-2"></i>{{ _('Iniciar Sesión') }}
                 </a>

@@ -82,6 +82,15 @@
                    class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary focus:ring-primary p-3">
         </div>
 
+        <div class="flex items-center gap-2">
+            <input type="checkbox" id="is_active" name="is_active" 
+                   {% if job.is_active %}checked{% endif %}
+                   class="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded">
+            <label for="is_active" class="text-sm font-medium text-gray-700">
+                {{ _('Oferta activa (visible para candidatos)') }}
+            </label>
+        </div>
+
         <div class="flex gap-4">
             <button type="submit"
                     class="flex-1 primary-bg text-white py-3 px-6 rounded-lg hover:bg-purple-700 transition flex items-center justify-center">

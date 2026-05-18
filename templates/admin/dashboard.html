@@ -1,0 +1,133 @@
+{% extends 'base.html' %}
+{% set title = _('Panel de Administración') %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-primary">
+            <i class="fas fa-shield-alt mr-2"></i>{{ _('Panel de Administración') }}
+        </h1>
+        <p class="text-gray-600 mt-1">{{ _('Vista general del sistema') }}</p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">{{ _('Usuarios Totales') }}</p>
+                    <p class="text-3xl font-bold text-primary">{{ total_users }}</p>
+                </div>
+                <i class="fas fa-users text-3xl text-purple-200"></i>
+            </div>
+            <div class="mt-2 text-xs text-gray-400">
+                {{ total_candidates }} {{ _('candidatos') }} · {{ total_employers }} {{ _('empleadores') }}
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">{{ _('Ofertas Laborales') }}</p>
+                    <p class="text-3xl font-bold text-green-600">{{ total_jobs }}</p>
+                </div>
+                <i class="fas fa-briefcase text-3xl text-green-200"></i>
+            </div>
+            <div class="mt-2 text-xs text-gray-400">
+                {{ active_jobs }} {{ _('activas') }}
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">{{ _('Postulaciones') }}</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ total_applications }}</p>
+                </div>
+                <i class="fas fa-file-alt text-3xl text-blue-200"></i>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">{{ _('Estado') }}</p>
+                    <p class="text-lg font-bold text-green-600"><i class="fas fa-check-circle"></i> Online</p>
+                </div>
+                <i class="fas fa-server text-3xl text-gray-200"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <a href="{{ url_for('admin_users') }}" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition flex items-center gap-3">
+            <i class="fas fa-users-cog text-primary text-xl"></i>
+            <span class="font-medium text-gray-700">{{ _('Gestionar Usuarios') }}</span>
+        </a>
+        <a href="{{ url_for('admin_jobs') }}" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition flex items-center gap-3">
+            <i class="fas fa-clipboard-list text-primary text-xl"></i>
+            <span class="font-medium text-gray-700">{{ _('Gestionar Ofertas') }}</span>
+        </a>
+        <a href="{{ url_for('admin_applications') }}" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition flex items-center gap-3">
+            <i class="fas fa-file-alt text-primary text-xl"></i>
+            <span class="font-medium text-gray-700">{{ _('Ver Postulaciones') }}</span>
+        </a>
+        <a href="{{ url_for('admin_create_user') }}" class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 hover:border-purple-300 transition flex items-center gap-3">
+            <i class="fas fa-user-plus text-primary text-xl"></i>
+            <span class="font-medium text-gray-700">{{ _('Crear Usuario') }}</span>
+        </a>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Recent Users -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-user-clock mr-2 text-primary"></i>{{ _('Usuarios Recientes') }}
+            </h2>
+            <div class="space-y-3">
+                {% for user in recent_users %}
+                <div class="flex items-center justify-between py-2 border-b border-gray-50">
+                    <div class="flex items-center gap-3">
+                        <img src="{{ url_for('static', filename=user.profile_picture or 'profiles/default-profile.jpg') }}" 
+                             class="w-8 h-8 rounded-full object-cover">
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">{{ user.full_name }}</p>
+                            <p class="text-xs text-gray-400">{{ user.email }}</p>
+                        </div>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full 
+                        {% if user.user_type == 'admin' %}bg-red-100 text-red-700
+                        {% elif user.user_type == 'employer' %}bg-blue-100 text-blue-700
+                        {% else %}bg-green-100 text-green-700{% endif %}">
+                        {{ user.user_type }}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Recent Jobs -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">
+                <i class="fas fa-briefcase mr-2 text-primary"></i>{{ _('Ofertas Recientes') }}
+            </h2>
+            <div class="space-y-3">
+                {% for job in recent_jobs %}
+                <div class="flex items-center justify-between py-2 border-b border-gray-50">
+                    <div>
+                        <p class="text-sm font-medium text-gray-800">{{ job.title }}</p>
+                        <p class="text-xs text-gray-400">{{ job.company }} · {{ job.location }}</p>
+                    </div>
+                    <span class="text-xs px-2 py-1 rounded-full {% if job.is_active %}bg-green-100 text-green-700{% else %}bg-gray-100 text-gray-500{% endif %}">
+                        {% if job.is_active %}{{ _('Activa') }}{% else %}{{ _('Inactiva') }}{% endif %}
+                    </span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
