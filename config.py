@@ -24,7 +24,13 @@ class Config:
     APP_NAME = os.environ.get('APP_NAME', 'JobConnect')
     MAX_FILENAME_LENGTH = 255
 
-    # Database
+    # Database - fix Railway's postgres:// to postgresql:// for SQLAlchemy 2.x
+    @staticmethod
+    def _fix_database_url(url):
+        if url and url.startswith('postgres://'):
+            return url.replace('postgres://', 'postgresql://', 1)
+        return url
+
     SQLALCHEMY_DATABASE_URI = os.environ.get(
         'DATABASE_URL', f'sqlite:///{BASE_DIR / "instance" / "jobconnect.db"}'
     )
@@ -136,6 +142,12 @@ class Config:
     @staticmethod
     def init_app(app):
         """Initialize application-specific settings."""
+        # Fix Railway/Heroku postgres:// to postgresql:// for SQLAlchemy 2.x
+        db_url = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        if db_url and db_url.startswith('postgres://'):
+            app.config['SQLALCHEMY_DATABASE_URI'] = db_url.replace(
+                'postgres://', 'postgresql://', 1
+            )
         os.makedirs(app.config.get('UPLOAD_FOLDER', 'uploads'), exist_ok=True)
         os.makedirs(app.config.get('LOG_DIR', 'static/logs'), exist_ok=True)
 
