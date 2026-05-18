@@ -153,20 +153,7 @@ def create_app(config_name=None):
     app.config.from_object(config[config_name])
     config[config_name].init_app(app)
 
-    # Initialize extensions with app
-    db.init_app(app)
-    babel.init_app(app)
-    login_manager.init_app(app)
-    cache.init_app(app)
-    limiter.init_app(app)
-
-    # Configure login manager
-    login_manager.login_view = 'login'
-    login_manager.login_message = _('Por favor inicia sesión para acceder a esta página.')
-    login_manager.login_message_category = 'warning'
-
-    # Register locale selector
-    @babel.localeselector
+    # Define locale selector for Babel 4.0
     def get_locale():
         """Determine the best language for the user."""
         lang = request.args.get('lang')
@@ -178,6 +165,18 @@ def create_app(config_name=None):
         return request.accept_languages.best_match(
             app.config['LANGUAGES'].keys()
         )
+
+    # Initialize extensions with app
+    db.init_app(app)
+    babel.init_app(app, locale_selector=get_locale)
+    login_manager.init_app(app)
+    cache.init_app(app)
+    limiter.init_app(app)
+
+    # Configure login manager
+    login_manager.login_view = 'login'
+    login_manager.login_message = _('Por favor inicia sesión para acceder a esta página.')
+    login_manager.login_message_category = 'warning'
 
     # Context processors
     @app.context_processor
