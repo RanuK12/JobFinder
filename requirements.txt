@@ -9,6 +9,7 @@ Werkzeug==3.0.1
 # Database
 Flask-SQLAlchemy==3.1.1
 SQLAlchemy==2.0.23
+psycopg2-binary==2.9.9
 
 # Authentication & Security
 Flask-Login==0.6.3
