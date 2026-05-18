@@ -229,9 +229,31 @@ def create_app(config_name=None):
     # Create database tables and ensure admin exists
     with app.app_context():
         db.create_all()
+        _migrate_database()
         _ensure_admin_exists()
 
     return app
+
+
+def _migrate_database():
+    """Run manual migrations for columns that db.create_all() won't add to existing tables."""
+    from sqlalchemy import inspect, text
+    inspector = inspect(db.engine)
+
+    # Check if 'users' table exists and add missing columns
+    if 'users' in inspector.get_table_names():
+        columns = [col['name'] for col in inspector.get_columns('users')]
+
+        if 'is_active_user' not in columns:
+            try:
+                db.session.execute(text(
+                    'ALTER TABLE users ADD COLUMN is_active_user BOOLEAN DEFAULT TRUE'
+                ))
+                db.session.commit()
+                logger.info("Migration: Added is_active_user column to users table")
+            except Exception as e:
+                db.session.rollback()
+                logger.warning(f"Migration is_active_user skipped: {e}")
 
 
 def _ensure_admin_exists():
