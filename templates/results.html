@@ -2,96 +2,121 @@
 {% set title = _('Resultados de Búsqueda') %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
-    <h1 class="text-3xl font-bold text-primary mb-8 text-center">
-        <i class="fas fa-briefcase mr-2"></i>{{ _('Trabajos Recomendados') }}
-    </h1>
+<div class="max-w-4xl mx-auto">
+    <div class="text-center mb-8">
+        <h1 class="text-3xl font-bold text-primary mb-2">
+            <i class="fas fa-briefcase mr-2"></i>{{ _('Trabajos Recomendados') }}
+        </h1>
+        <p class="text-gray-600">
+            {{ _('Se encontraron %(count)s trabajos que coinciden con tu perfil', count=jobs|length) }}
+        </p>
+    </div>
 
     {% if jobs %}
-    <div class="space-y-6">
+    <div class="space-y-4">
         {% for job in jobs %}
         <div class="bg-white rounded-xl card-hover p-6">
-            <div class="flex items-start justify-between">
-                <!-- Información del trabajo -->
-                <div>
-                    <h2 class="text-2xl font-bold text-primary">
-                        {{ job.title if job.title else 'N/A' }}
-                    </h2>
-                    <div class="mt-3 space-y-1 text-gray-600">
-                        <p><i class="fas fa-building mr-2"></i>{{ job.company if job.company else 'N/A' }}</p>
-                        <p><i class="fas fa-map-marker-alt mr-2"></i>{{ job.location if job.location else 'N/A' }}</p>
+            <div class="flex flex-col md:flex-row items-start justify-between gap-4">
+                <!-- Job Info -->
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-2">
+                        <h2 class="text-xl font-bold text-primary">
+                            {{ job.title or 'N/A' }}
+                        </h2>
+                        {% if job.relevance %}
+                        <span class="text-xs px-2 py-1 rounded-full font-medium
+                            {% if job.relevance == 'high' %}bg-green-100 text-green-700
+                            {% elif job.relevance == 'medium' %}bg-yellow-100 text-yellow-700
+                            {% else %}bg-gray-100 text-gray-600{% endif %}">
+                            {% if job.relevance == 'high' %}{{ _('Alta relevancia') }}
+                            {% elif job.relevance == 'medium' %}{{ _('Relevancia media') }}
+                            {% else %}{{ _('Relevancia baja') }}{% endif %}
+                        </span>
+                        {% endif %}
                     </div>
+
+                    <div class="flex flex-wrap gap-3 text-sm text-gray-600 mb-3">
+                        <span><i class="fas fa-building mr-1"></i>{{ job.company or 'N/A' }}</span>
+                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ job.location or 'Remote' }}</span>
+                        {% if job.platform %}
+                        <span><i class="fas fa-globe mr-1"></i>{{ job.platform }}</span>
+                        {% endif %}
+                        {% if job.match_score %}
+                        <span class="text-primary font-medium">
+                            <i class="fas fa-star mr-1"></i>{{ job.match_score }}% match
+                        </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Matched Skills -->
+                    {% if job.keywords_matched %}
+                    <div class="flex flex-wrap gap-1.5 mt-2">
+                        {% for keyword in job.keywords_matched[:8] %}
+                        <span class="bg-purple-100 text-purple-700 px-2.5 py-0.5 rounded-full text-xs font-medium">
+                            {{ keyword }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
                 </div>
 
-                <!-- Botón "Postular" con enlace -->
-                <div class="flex flex-col items-end">
-                    <a href="{{ job.url if job.url else '#' }}" target="_blank"
-                       class="primary-bg hover:bg-purple-700 text-white px-6 py-2 rounded-lg flex items-center mb-2">
-                        <i class="fas fa-external-link-alt mr-2"></i>{{ _('Ver Oferta') }}
+                <!-- Actions -->
+                <div class="flex flex-col gap-2 min-w-[140px]">
+                    {% if job.url %}
+                    <a href="{{ job.url }}" target="_blank" rel="noopener noreferrer"
+                       class="primary-bg text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2">
+                        <i class="fas fa-external-link-alt"></i>{{ _('Ver Oferta') }}
                     </a>
-                    
-                    <button onclick="applyJob('{{ job.title|escape }}', '{{ job.company|escape }}')"
-                            class="bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg flex items-center">
-                        <i class="fas fa-check-circle mr-2"></i>{{ _('Postular') }}
+                    {% endif %}
+                    <button onclick="applyJob('{{ job.title|e }}', '{{ job.company|e }}', '{{ job.url|default("", true)|e }}')"
+                            class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm flex items-center justify-center gap-2 transition">
+                        <i class="fas fa-check-circle"></i>{{ _('Guardar') }}
                     </button>
                 </div>
             </div>
-
-            <!-- Coincidencias con el CV -->
-            {% if job.keywords_matched %}
-            <div class="mt-6">
-                <h3 class="text-lg font-bold text-primary mb-2">{{ _('Coincidencias con tu CV') }}</h3>
-                <div class="flex flex-wrap gap-2">
-                    {% for keyword in job.keywords_matched %}
-                    <span class="bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
-                        {{ keyword }}
-                    </span>
-                    {% endfor %}
-                </div>
-            </div>
-            {% endif %}
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center p-8 bg-purple-50 rounded-xl">
-        <i class="fas fa-file-alt text-4xl text-primary mb-4"></i>
-        <p class="text-gray-600">{{ _('No se encontraron trabajos que coincidan con tu CV.') }}</p>
+    <div class="text-center py-12 bg-purple-50 rounded-xl">
+        <i class="fas fa-search text-5xl text-primary mb-4"></i>
+        <p class="text-gray-600 text-lg">{{ _('No se encontraron trabajos que coincidan con tu CV.') }}</p>
     </div>
     {% endif %}
 
+    <!-- Back to Search -->
     <div class="mt-8 text-center">
         <a href="{{ url_for('index') }}"
-           class="accent-bg hover:bg-red-700 text-white px-6 py-3 rounded-lg flex items-center justify-center w-full max-w-xs mx-auto">
-            <i class="fas fa-arrow-left mr-2"></i>{{ _('Buscar Nuevamente') }}
+           class="accent-bg text-white px-8 py-3 rounded-lg inline-flex items-center gap-2 transition">
+            <i class="fas fa-redo"></i>{{ _('Nueva Búsqueda') }}
         </a>
     </div>
 </div>
 
-<!-- Script para manejar la postulación -->
 <script>
-    function applyJob(title, company) {
+    function applyJob(title, company, url) {
         fetch('/apply_job', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                title: title,
-                company: company
-            })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, company, url })
         })
         .then(response => response.json())
         .then(data => {
-            if (data.status === 'success') {
-                alert('¡Postulación exitosa!');
-            } else {
-                alert('Ya aplicaste a este trabajo.');
-            }
+            const msg = data.status === 'success' 
+                ? '{{ _("Postulación guardada exitosamente.") }}'
+                : data.message || '{{ _("Ya aplicaste a este trabajo.") }}';
+            
+            // Show inline notification
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 right-4 z-50 p-4 rounded-lg shadow-lg ${
+                data.status === 'success' ? 'bg-green-500' : 'bg-yellow-500'
+            } text-white font-medium`;
+            notification.textContent = msg;
+            document.body.appendChild(notification);
+            setTimeout(() => notification.remove(), 3000);
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('Hubo un error al postular. Inténtalo de nuevo.');
+        .catch(() => {
+            alert('{{ _("Error al procesar. Inténtalo de nuevo.") }}');
         });
     }
 </script>
