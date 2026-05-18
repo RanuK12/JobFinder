@@ -229,9 +229,32 @@ def create_app(config_name=None):
     # Create database tables and ensure admin exists
     with app.app_context():
         db.create_all()
+        _migrate_database()
         _ensure_admin_exists()
 
     return app
+
+
+def _migrate_database():
+    """Add missing columns to existing PostgreSQL tables.
+    
+    db.create_all() only creates new tables, it won't add columns
+    to tables that already exist. This handles schema migrations.
+    """
+    from sqlalchemy import inspect, text
+    try:
+        inspector = inspect(db.engine)
+        if 'users' in inspector.get_table_names():
+            columns = [col['name'] for col in inspector.get_columns('users')]
+            if 'is_active_user' not in columns:
+                with db.engine.connect() as conn:
+                    conn.execute(text(
+                        'ALTER TABLE users ADD COLUMN is_active_user BOOLEAN DEFAULT TRUE'
+                    ))
+                    conn.commit()
+                logger.info("Migration: Added is_active_user column to users table")
+    except Exception as e:
+        logger.warning(f"Migration check skipped: {e}")
 
 
 def _ensure_admin_exists():
