@@ -71,7 +71,7 @@ class JobScraper:
             f"remote={is_remote} country='{country}'"
         )
 
-        # Run all sources concurrently for speed
+        # Run ALL sources concurrently (JobSpy + free APIs)
         all_jobs: List[Dict] = []
         sources = [
             ('Remotive', self._fetch_remotive),
@@ -79,30 +79,27 @@ class JobScraper:
             ('RemoteOK', self._fetch_remoteok),
         ]
 
-        with ThreadPoolExecutor(max_workers=3) as executor:
+        with ThreadPoolExecutor(max_workers=4) as executor:
+            # Launch free API sources
             futures = {
                 executor.submit(fn, search_term, location, is_remote): name
                 for name, fn in sources
             }
-            for future in as_completed(futures, timeout=25):
+            # Launch JobSpy as concurrent source (LinkedIn/Indeed/Google)
+            futures[executor.submit(
+                self._try_jobspy, search_term, location, is_remote,
+                job_type, country, results_wanted
+            )] = 'JobSpy'
+
+            for future in as_completed(futures, timeout=30):
                 source = futures[future]
                 try:
-                    jobs = future.result(timeout=20) or []
-                    self.logger.info(f"{source}: {len(jobs)} jobs")
-                    all_jobs.extend(jobs)
+                    jobs = future.result(timeout=25) or []
+                    if jobs:
+                        self.logger.info(f"{source}: {len(jobs)} jobs")
+                        all_jobs.extend(jobs)
                 except Exception as e:
-                    self.logger.warning(f"{source} failed: {e}")
-
-        # Try JobSpy as bonus source if available
-        try:
-            jobspy_jobs = self._try_jobspy(
-                search_term, location, is_remote, job_type, country, results_wanted
-            )
-            if jobspy_jobs:
-                self.logger.info(f"JobSpy: {len(jobspy_jobs)} jobs")
-                all_jobs.extend(jobspy_jobs)
-        except Exception as e:
-            self.logger.debug(f"JobSpy unavailable: {e}")
+                    self.logger.debug(f"{source} failed: {e}")
 
         # Deduplicate by (title, company)
         seen = set()
