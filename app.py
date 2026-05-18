@@ -438,77 +438,101 @@ def _register_routes(app):
     @login_required
     @limiter.limit("10 per minute")
     def index():
-        """CV upload and job search page."""
+        """Job search page - supports CV upload and keyword search."""
         if request.method == 'POST':
-            if 'cv' not in request.files:
-                flash(_('No se seleccionó ningún archivo.'), 'error')
-                return redirect(request.url)
-
-            file = request.files['cv']
-            if file.filename == '':
-                flash(_('No se seleccionó ningún archivo.'), 'error')
-                return redirect(request.url)
-
-            if not _allowed_file(file.filename, app):
-                flash(
-                    _('Tipo de archivo no válido. Sube un archivo PDF o DOCX.'),
-                    'error'
-                )
-                return redirect(request.url)
-
+            search_term = request.form.get('search_term', '').strip()
+            location = request.form.get('location', '').strip()
+            job_type = request.form.get('job_type', '').strip()
+            is_remote = request.form.get('is_remote') == 'on'
+            country = request.form.get('country', '').strip()
+            cv_text = None
             filepath = None
+
+            # Handle CV upload (optional)
+            if 'cv' in request.files:
+                file = request.files['cv']
+                if file and file.filename and file.filename != '':
+                    if not _allowed_file(file.filename, app):
+                        flash(
+                            _('Tipo de archivo no válido. Sube un archivo PDF o DOCX.'),
+                            'error'
+                        )
+                        return redirect(request.url)
+
+                    try:
+                        filename = secure_filename(file.filename)
+                        filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+                        file.save(filepath)
+
+                        from cv_parser import parse_cv
+                        cv_text = parse_cv(filepath)
+                        if cv_text:
+                            logger.info(f"CV parsed: {len(cv_text)} chars")
+                        else:
+                            flash(_('No se pudo extraer texto del CV. Usa la búsqueda por palabras clave.'), 'warning')
+                    except Exception as e:
+                        logger.error(f"Error parsing CV: {str(e)}")
+                        flash(_('Error procesando el CV. Usa la búsqueda por palabras clave.'), 'warning')
+                    finally:
+                        if filepath and os.path.exists(filepath):
+                            try:
+                                os.remove(filepath)
+                            except OSError:
+                                pass
+
+            # Must have either search_term or CV
+            if not search_term and not cv_text:
+                flash(_('Ingresa un término de búsqueda o sube tu CV.'), 'warning')
+                return redirect(request.url)
+
             try:
-                filename = secure_filename(file.filename)
-                filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-                file.save(filepath)
-
-                # Parse CV
-                from cv_parser import parse_cv
-                cv_text = parse_cv(filepath)
-                if not cv_text:
-                    raise ValueError(_('No se pudo extraer texto del CV.'))
-
-                # Search for jobs
                 from scraper import JobScraper
                 scraper = JobScraper(app)
-                jobs = scraper.get_jobs(cv_text, session.get('language', 'es'))
 
-                # Match jobs with AI
-                from ai_matcher import match_jobs
-                matched_jobs = match_jobs(cv_text, jobs) if jobs else []
+                # Search for jobs
+                jobs = scraper.get_jobs(
+                    cv_text=cv_text,
+                    language=session.get('language', 'es'),
+                    search_term=search_term or None,
+                    location=location or None,
+                    job_type=job_type or None,
+                    is_remote=is_remote,
+                    results_wanted=app.config.get('JOBSPY_RESULTS_WANTED', 25),
+                    hours_old=app.config.get('JOBSPY_HOURS_OLD', 168),
+                    country=country or None,
+                )
 
-                if matched_jobs:
-                    session['matched_jobs'] = matched_jobs
+                if jobs:
+                    # If CV was provided, rank by relevance
+                    if cv_text:
+                        from ai_matcher import match_jobs
+                        matched_jobs = match_jobs(cv_text, jobs)
+                        if not matched_jobs:
+                            matched_jobs = jobs  # Show unranked if matching fails
+                    else:
+                        matched_jobs = jobs
+
+                    session['matched_jobs'] = matched_jobs[:50]  # Limit for session size
                     flash(
-                        _('Se encontraron %(count)s trabajos recomendados.',
+                        _('Se encontraron %(count)s trabajos.',
                           count=len(matched_jobs)),
                         'success'
                     )
                     return redirect(url_for('results'))
                 else:
                     flash(
-                        _('No se encontraron trabajos que coincidan con tu CV. '
-                          'Intenta actualizar tus habilidades.'),
+                        _('No se encontraron trabajos. Intenta con otros términos de búsqueda o una ubicación diferente.'),
                         'info'
                     )
                     return redirect(request.url)
 
-            except ValueError as e:
-                flash(str(e), 'error')
-                return redirect(request.url)
             except Exception as e:
-                logger.error(f"Error processing CV: {str(e)}")
+                logger.error(f"Error in job search: {str(e)}")
                 flash(
-                    _('Error procesando el archivo. Inténtalo de nuevo.'),
+                    _('Error en la búsqueda. Inténtalo de nuevo en unos momentos.'),
                     'error'
                 )
                 return redirect(request.url)
-            finally:
-                if filepath and os.path.exists(filepath):
-                    try:
-                        os.remove(filepath)
-                    except OSError:
-                        pass
 
         return render_template('index.html')
 
