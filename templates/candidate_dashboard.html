@@ -3,7 +3,7 @@
 
 {% block content %}
 <div class="max-w-5xl mx-auto">
-    {# Profile completeness banner #}
+    {# Profile completeness calculation #}
     {% set checklist = [
         ('profile_picture', current_user.profile_picture and 'default-profile' not in current_user.profile_picture),
         ('headline', current_user.headline),
@@ -17,49 +17,78 @@
     {% set total = checklist | length %}
     {% set pct = (completed * 100 // total) if total else 0 %}
 
+    {# Profile completeness banner #}
     {% if pct < 70 %}
-    <div class="bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl p-5 mb-6">
-        <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <div class="relative overflow-hidden bg-gradient-to-r from-primary-500 via-primary-600 to-indigo-600 text-white rounded-2xl p-6 mb-6 animate-fade-in">
+        <!-- Decorative elements -->
+        <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+        <div class="absolute bottom-0 left-1/3 w-24 h-24 bg-white/5 rounded-full translate-y-1/2"></div>
+        
+        <div class="relative flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div class="flex-1">
-                <h2 class="font-bold text-lg flex items-center gap-2">
-                    <i class="fas fa-sparkles"></i>{{ _('Completa tu perfil') }} ({{ pct }}%)
-                </h2>
-                <p class="text-purple-100 text-sm mt-1">
-                    {{ _('Un perfil completo recibe 5x más oportunidades') }}
+                <div class="flex items-center gap-2 mb-2">
+                    <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-sparkles text-sm"></i>
+                    </div>
+                    <h2 class="font-bold text-lg">{{ _('Completa tu perfil') }}</h2>
+                    <span class="text-sm bg-white/20 px-2 py-0.5 rounded-full font-semibold">{{ pct }}%</span>
+                </div>
+                <p class="text-primary-100 text-sm leading-relaxed">
+                    {{ _('Un perfil completo recibe 5x más oportunidades. Solo te faltan') }} {{ total - completed }} {{ _('pasos.') }}
                 </p>
-                <div class="bg-white/20 rounded-full h-2 mt-3 overflow-hidden">
-                    <div class="bg-white h-full rounded-full transition-all" style="width: {{ pct }}%"></div>
+                <!-- Progress bar -->
+                <div class="bg-white/20 rounded-full h-2 mt-4 overflow-hidden max-w-md">
+                    <div class="bg-white h-full rounded-full transition-all duration-1000 ease-out" style="width: {{ pct }}%"></div>
+                </div>
+                <!-- Missing items hints -->
+                <div class="flex flex-wrap gap-2 mt-3">
+                    {% if not checklist[0][1] %}
+                    <span class="text-xs bg-white/10 px-2 py-1 rounded-md"><i class="fas fa-camera mr-1"></i>{{ _('Foto') }}</span>
+                    {% endif %}
+                    {% if not checklist[1][1] %}
+                    <span class="text-xs bg-white/10 px-2 py-1 rounded-md"><i class="fas fa-heading mr-1"></i>{{ _('Titular') }}</span>
+                    {% endif %}
+                    {% if not checklist[4][1] %}
+                    <span class="text-xs bg-white/10 px-2 py-1 rounded-md"><i class="fas fa-tools mr-1"></i>{{ _('Skills') }}</span>
+                    {% endif %}
+                    {% if not checklist[6][1] %}
+                    <span class="text-xs bg-white/10 px-2 py-1 rounded-md"><i class="fas fa-file-pdf mr-1"></i>CV</span>
+                    {% endif %}
                 </div>
             </div>
             <a href="{{ url_for('edit_profile') }}"
-               class="bg-white text-purple-700 font-medium px-5 py-2.5 rounded-lg hover:bg-purple-50 transition flex items-center gap-2 whitespace-nowrap">
-                <i class="fas fa-magic-wand-sparkles"></i>{{ _('Completar perfil') }}
+               class="bg-white text-primary-700 font-semibold px-5 py-2.5 rounded-xl hover:bg-primary-50 transition-all shadow-sm flex items-center gap-2 whitespace-nowrap shrink-0">
+                <i class="fas fa-arrow-right text-xs"></i>{{ _('Completar perfil') }}
             </a>
         </div>
     </div>
     {% endif %}
 
-    {# Header / hero #}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
-        <div class="h-20 bg-gradient-to-r from-purple-500 to-indigo-600"></div>
-        <div class="px-6 pb-6 -mt-12">
+    {# User hero card #}
+    <div class="bg-white rounded-2xl border border-slate-200/80 overflow-hidden mb-6 animate-fade-in" style="animation-delay: 0.1s;">
+        <!-- Banner -->
+        <div class="h-24 bg-gradient-to-r from-primary-500 via-primary-400 to-indigo-500 relative">
+            <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImEiIHBhdHRlcm5Vbml0cz0idXNlclNwYWNlT25Vc2UiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCI+PHBhdGggZD0iTTAgMGg2MHY2MEgweiIgZmlsbD0ibm9uZSIvPjxjaXJjbGUgY3g9IjMwIiBjeT0iMzAiIHI9IjEuNSIgZmlsbD0icmdiYSgyNTUsMjU1LDI1NSwwLjEpIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCBmaWxsPSJ1cmwoI2EpIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIi8+PC9zdmc+')] opacity-50"></div>
+        </div>
+        
+        <div class="px-6 pb-6 -mt-12 relative">
             <div class="flex flex-col sm:flex-row items-start sm:items-end gap-4">
                 <img src="{{ url_for('static', filename=current_user.profile_picture or 'profiles/default-profile.jpg') }}"
-                     class="w-24 h-24 rounded-full border-4 border-white shadow-lg object-cover bg-white">
-                <div class="flex-1 mt-3 sm:mt-0 sm:pb-2">
-                    <div class="flex items-start justify-between flex-wrap gap-2">
+                     class="w-24 h-24 rounded-2xl border-4 border-white shadow-medium object-cover bg-white">
+                <div class="flex-1 mt-2 sm:mt-0 sm:pb-1">
+                    <div class="flex items-start justify-between flex-wrap gap-3">
                         <div>
-                            <h1 class="text-2xl font-bold text-gray-800">{{ current_user.full_name }}</h1>
+                            <h1 class="text-xl sm:text-2xl font-bold text-slate-900">{{ current_user.full_name }}</h1>
                             {% if current_user.headline %}
-                            <p class="text-purple-600 font-medium text-sm mt-0.5">{{ current_user.headline }}</p>
+                            <p class="text-primary-600 font-medium text-sm mt-0.5">{{ current_user.headline }}</p>
                             {% endif %}
-                            <div class="flex flex-wrap gap-3 text-xs text-gray-500 mt-2">
+                            <div class="flex flex-wrap gap-3 text-xs text-slate-500 mt-2">
                                 {% if current_user.location %}
-                                <span><i class="fas fa-map-marker-alt mr-1"></i>{{ current_user.location }}</span>
+                                <span class="flex items-center gap-1"><i class="fas fa-map-marker-alt text-slate-300"></i>{{ current_user.location }}</span>
                                 {% endif %}
                                 {% if current_user.open_to_work %}
-                                <span class="flex items-center gap-1.5 bg-green-50 text-green-700 px-2 py-0.5 rounded-full font-medium">
-                                    <span class="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
+                                <span class="flex items-center gap-1.5 bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded-full font-medium border border-emerald-100">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
                                     {{ _('Open to work') }}
                                 </span>
                                 {% endif %}
@@ -67,13 +96,13 @@
                         </div>
                         <div class="flex gap-2">
                             <a href="{{ url_for('edit_profile') }}"
-                               class="bg-purple-50 border border-purple-200 text-purple-700 text-sm px-3 py-2 rounded-lg hover:bg-purple-100 transition">
-                                <i class="fas fa-edit mr-1"></i>{{ _('Editar') }}
+                               class="button-ghost text-xs border border-slate-200">
+                                <i class="fas fa-edit text-[10px]"></i>{{ _('Editar') }}
                             </a>
                             {% if current_user.username %}
                             <a href="{{ url_for('public_profile', username=current_user.username) }}"
-                               class="primary-bg text-white text-sm px-3 py-2 rounded-lg hover:opacity-90 transition">
-                                <i class="fas fa-eye mr-1"></i>{{ _('Ver perfil público') }}
+                               class="button-primary text-xs py-2">
+                                <i class="fas fa-eye text-[10px]"></i>{{ _('Ver perfil') }}
                             </a>
                             {% endif %}
                         </div>
@@ -83,102 +112,128 @@
         </div>
     </div>
 
-    {# Pipeline stats #}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <div class="flex items-center justify-between mb-4">
-            <h3 class="font-bold text-gray-800">
-                <i class="fas fa-chart-bar mr-2 text-primary"></i>{{ _('Mi Pipeline') }}
+    {# Pipeline metrics #}
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-6 animate-fade-in-up" style="animation-delay: 0.15s;">
+        <div class="flex items-center justify-between mb-5">
+            <h3 class="font-bold text-slate-800 flex items-center gap-2">
+                <div class="w-7 h-7 bg-primary-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-bar text-primary-500 text-xs"></i>
+                </div>
+                {{ _('Mi Pipeline') }}
             </h3>
             <a href="{{ url_for('applications') }}"
-               class="text-sm text-primary hover:underline flex items-center gap-1">
+               class="text-sm text-primary-600 hover:text-primary-700 font-medium flex items-center gap-1 transition">
                 {{ _('Ver todo') }} <i class="fas fa-arrow-right text-xs"></i>
             </a>
         </div>
 
         {% set total_apps = recent_applications|length if recent_applications else 0 %}
 
-        <div class="grid grid-cols-3 sm:grid-cols-5 gap-3">
-            <div class="text-center p-3 bg-blue-50 rounded-lg">
-                <p class="text-2xl font-bold text-blue-600">{{ total_apps }}</p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ _('Total') }}</p>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+            <div class="relative group p-4 bg-gradient-to-br from-blue-50 to-blue-100/50 rounded-xl border border-blue-100 text-center hover:shadow-sm transition">
+                <p class="text-2xl sm:text-3xl font-bold text-blue-600">{{ total_apps }}</p>
+                <p class="text-xs text-slate-500 mt-1 font-medium">{{ _('Total') }}</p>
+                <div class="absolute top-2 right-2 w-2 h-2 bg-blue-300 rounded-full opacity-0 group-hover:opacity-100 transition"></div>
             </div>
-            <div class="text-center p-3 bg-gray-50 rounded-lg">
-                <p class="text-2xl font-bold text-gray-600">
+            <div class="relative group p-4 bg-gradient-to-br from-slate-50 to-slate-100/50 rounded-xl border border-slate-100 text-center hover:shadow-sm transition">
+                <p class="text-2xl sm:text-3xl font-bold text-slate-600">
                     {{ recent_applications|selectattr('status', 'equalto', 'saved')|list|length if recent_applications else 0 }}
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ _('Guardados') }}</p>
+                <p class="text-xs text-slate-500 mt-1 font-medium">{{ _('Guardados') }}</p>
             </div>
-            <div class="text-center p-3 bg-yellow-50 rounded-lg">
-                <p class="text-2xl font-bold text-yellow-600">
+            <div class="relative group p-4 bg-gradient-to-br from-amber-50 to-amber-100/50 rounded-xl border border-amber-100 text-center hover:shadow-sm transition">
+                <p class="text-2xl sm:text-3xl font-bold text-amber-600">
                     {{ recent_applications|selectattr('status', 'equalto', 'applied')|list|length if recent_applications else 0 }}
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ _('Aplicados') }}</p>
+                <p class="text-xs text-slate-500 mt-1 font-medium">{{ _('Aplicados') }}</p>
             </div>
-            <div class="text-center p-3 bg-purple-50 rounded-lg">
-                <p class="text-2xl font-bold text-purple-600">
+            <div class="relative group p-4 bg-gradient-to-br from-purple-50 to-purple-100/50 rounded-xl border border-purple-100 text-center hover:shadow-sm transition">
+                <p class="text-2xl sm:text-3xl font-bold text-purple-600">
                     {{ recent_applications|selectattr('status', 'equalto', 'interviewing')|list|length if recent_applications else 0 }}
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ _('Entrevistas') }}</p>
+                <p class="text-xs text-slate-500 mt-1 font-medium">{{ _('Entrevistas') }}</p>
             </div>
-            <div class="text-center p-3 bg-green-50 rounded-lg">
-                <p class="text-2xl font-bold text-green-600">
+            <div class="relative group p-4 bg-gradient-to-br from-emerald-50 to-emerald-100/50 rounded-xl border border-emerald-100 text-center hover:shadow-sm transition col-span-2 sm:col-span-1">
+                <p class="text-2xl sm:text-3xl font-bold text-emerald-600">
                     {{ recent_applications|selectattr('status', 'equalto', 'offer')|list|length if recent_applications else 0 }}
                 </p>
-                <p class="text-xs text-gray-500 mt-0.5">{{ _('Ofertas') }}</p>
+                <p class="text-xs text-slate-500 mt-1 font-medium">{{ _('Ofertas') }}</p>
             </div>
         </div>
+
+        {% if total_apps == 0 %}
+        <div class="mt-4 text-center py-4 bg-slate-50 rounded-xl">
+            <p class="text-sm text-slate-500">{{ _('Aún no tienes trabajos en tu pipeline.') }}</p>
+            <a href="{{ url_for('index') }}" class="text-sm text-primary-600 font-medium hover:underline mt-1 inline-block">{{ _('Empieza buscando →') }}</a>
+        </div>
+        {% endif %}
     </div>
 
-    {# Skills quick edit #}
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-        <h3 class="font-bold text-gray-800 mb-3">
-            <i class="fas fa-tools mr-2 text-primary"></i>{{ _('Mis Habilidades') }}
+    {# Skills section #}
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-6 mb-6 animate-fade-in-up" style="animation-delay: 0.2s;">
+        <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+            <div class="w-7 h-7 bg-primary-100 rounded-lg flex items-center justify-center">
+                <i class="fas fa-tools text-primary-500 text-xs"></i>
+            </div>
+            {{ _('Mis Habilidades') }}
         </h3>
 
         {% if current_user.skill_list %}
-        <div class="flex flex-wrap gap-2 mb-3">
+        <div class="flex flex-wrap gap-2 mb-4">
             {% for skill in current_user.skill_list %}
-            <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm">{{ skill }}</span>
+            <span class="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg text-sm font-medium border border-primary-100">
+                {{ skill }}
+            </span>
             {% endfor %}
         </div>
         {% else %}
-        <p class="text-sm text-gray-400 mb-3">
-            {{ _('Aún no tienes habilidades. Agrégalas para mejorar tus matches.') }}
-        </p>
+        <div class="bg-slate-50 rounded-xl p-4 mb-4 text-center">
+            <p class="text-sm text-slate-500">
+                <i class="fas fa-info-circle text-slate-300 mr-1"></i>
+                {{ _('Aún no tienes habilidades. Agrégalas para mejorar tus matches.') }}
+            </p>
+        </div>
         {% endif %}
 
         <form method="POST" action="{{ url_for('update_profile') }}" class="flex gap-2">
             <input type="text" name="skills"
-                   class="form-input flex-1 p-2.5 text-sm"
+                   class="form-input flex-1"
                    placeholder="{{ _('Python, React, AWS...') }}"
                    value="{{ current_user.skills or '' }}">
-            <button type="submit" class="primary-bg text-white px-4 rounded-lg text-sm">
-                <i class="fas fa-save"></i>
+            <button type="submit" class="button-primary px-4 py-2">
+                <i class="fas fa-save text-xs"></i>
             </button>
         </form>
     </div>
 
-    {# Quick Actions #}
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    {# Quick Actions grid #}
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 animate-fade-in-up" style="animation-delay: 0.25s;">
         <a href="{{ url_for('index') }}"
-           class="primary-bg text-white p-4 rounded-xl flex flex-col items-center justify-center gap-1 hover:opacity-90 transition">
-            <i class="fas fa-search text-xl"></i>
-            <span class="text-sm font-medium">{{ _('Buscar') }}</span>
+           class="group relative overflow-hidden bg-gradient-to-br from-primary-500 to-primary-600 text-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 hover:shadow-glow transition-all duration-300">
+            <div class="absolute inset-0 bg-gradient-to-br from-primary-400 to-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <i class="fas fa-search text-xl relative z-10"></i>
+            <span class="text-sm font-semibold relative z-10">{{ _('Buscar') }}</span>
         </a>
         <a href="{{ url_for('applications') }}"
-           class="bg-purple-50 text-primary p-4 rounded-xl flex flex-col items-center justify-center gap-1 border border-purple-200 hover:bg-purple-100 transition">
-            <i class="fas fa-stream text-xl"></i>
-            <span class="text-sm font-medium">{{ _('Pipeline') }}</span>
+           class="group bg-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border border-slate-200 hover:border-primary-200 hover:shadow-soft transition-all duration-300">
+            <div class="w-10 h-10 bg-primary-50 rounded-xl flex items-center justify-center group-hover:bg-primary-100 transition">
+                <i class="fas fa-stream text-primary-500"></i>
+            </div>
+            <span class="text-sm font-semibold text-slate-700">{{ _('Pipeline') }}</span>
         </a>
         <a href="{{ url_for('edit_profile') }}"
-           class="bg-blue-50 text-blue-700 p-4 rounded-xl flex flex-col items-center justify-center gap-1 border border-blue-200 hover:bg-blue-100 transition">
-            <i class="fas fa-user-edit text-xl"></i>
-            <span class="text-sm font-medium">{{ _('Mi Perfil') }}</span>
+           class="group bg-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border border-slate-200 hover:border-blue-200 hover:shadow-soft transition-all duration-300">
+            <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center group-hover:bg-blue-100 transition">
+                <i class="fas fa-user-edit text-blue-500"></i>
+            </div>
+            <span class="text-sm font-semibold text-slate-700">{{ _('Mi Perfil') }}</span>
         </a>
         <a href="{{ url_for('job_listings') }}"
-           class="bg-gray-50 text-gray-700 p-4 rounded-xl flex flex-col items-center justify-center gap-1 border border-gray-200 hover:bg-gray-100 transition">
-            <i class="fas fa-list text-xl"></i>
-            <span class="text-sm font-medium">{{ _('Ofertas') }}</span>
+           class="group bg-white p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border border-slate-200 hover:border-emerald-200 hover:shadow-soft transition-all duration-300">
+            <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center group-hover:bg-emerald-100 transition">
+                <i class="fas fa-list text-emerald-500"></i>
+            </div>
+            <span class="text-sm font-semibold text-slate-700">{{ _('Ofertas') }}</span>
         </a>
     </div>
 </div>

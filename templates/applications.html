@@ -2,22 +2,22 @@
 {% set title = _('Mi Pipeline') %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto">
+<div class="max-w-5xl mx-auto">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 animate-fade-in">
         <div>
-            <h1 class="text-2xl font-bold text-primary">
-                <i class="fas fa-stream mr-2"></i>{{ _('Mi Pipeline de Trabajos') }}
+            <h1 class="text-2xl font-bold text-slate-900 tracking-tight">
+                {{ _('Mi Pipeline de Trabajos') }}
             </h1>
-            <p class="text-gray-500 text-sm mt-1">{{ _('Gestiona tus postulaciones y seguimiento') }}</p>
+            <p class="text-slate-500 text-sm mt-1">{{ _('Gestiona tus postulaciones y seguimiento') }}</p>
         </div>
-        <a href="{{ url_for('index') }}" class="primary-bg text-white px-5 py-2 rounded-lg flex items-center gap-2 text-sm">
-            <i class="fas fa-search"></i>{{ _('Buscar Más') }}
+        <a href="{{ url_for('index') }}" class="button-primary text-sm">
+            <i class="fas fa-search text-xs"></i>{{ _('Buscar Más') }}
         </a>
     </div>
 
-    <!-- Pipeline Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+    <!-- Pipeline Stats (Kanban columns preview) -->
+    <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2 mb-8 animate-fade-in-up">
         {% set status_counts = {} %}
         {% for app in applications %}
             {% if app.status in status_counts %}
@@ -28,44 +28,46 @@
         {% endfor %}
         
         {% set statuses = [
-            ('saved', 'Guardados', 'fa-bookmark', 'gray'),
-            ('applied', 'Aplicados', 'fa-paper-plane', 'blue'),
-            ('contacted', 'Contactados', 'fa-envelope', 'purple'),
-            ('interviewing', 'Entrevistas', 'fa-comments', 'yellow'),
-            ('offer', 'Ofertas', 'fa-trophy', 'green'),
-            ('accepted', 'Aceptados', 'fa-check-circle', 'emerald'),
-            ('rejected', 'Rechazados', 'fa-times-circle', 'red')
+            ('saved', 'Guardados', 'fa-bookmark', 'slate', 'from-slate-50 to-slate-100'),
+            ('applied', 'Aplicados', 'fa-paper-plane', 'blue', 'from-blue-50 to-blue-100'),
+            ('contacted', 'Contactados', 'fa-envelope', 'violet', 'from-violet-50 to-violet-100'),
+            ('interviewing', 'Entrevistas', 'fa-comments', 'amber', 'from-amber-50 to-amber-100'),
+            ('offer', 'Ofertas', 'fa-trophy', 'emerald', 'from-emerald-50 to-emerald-100'),
+            ('accepted', 'Aceptados', 'fa-check-circle', 'green', 'from-green-50 to-green-100'),
+            ('rejected', 'Rechazados', 'fa-times-circle', 'red', 'from-red-50 to-red-100')
         ] %}
         
-        {% for status_key, label, icon, color in statuses %}
-        <div class="bg-white rounded-lg p-3 border border-gray-100 text-center">
-            <i class="fas {{ icon }} text-{{ color }}-500 text-lg"></i>
-            <p class="text-xl font-bold text-gray-800 mt-1">{{ status_counts.get(status_key, 0) }}</p>
-            <p class="text-xs text-gray-500">{{ _(label) }}</p>
+        {% for status_key, label, icon, color, gradient in statuses %}
+        <div class="bg-gradient-to-br {{ gradient }} rounded-xl p-3 text-center border border-{{ color }}-100 hover:shadow-sm transition group">
+            <div class="w-7 h-7 bg-white rounded-lg flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 transition-transform">
+                <i class="fas {{ icon }} text-{{ color }}-500 text-xs"></i>
+            </div>
+            <p class="text-lg font-bold text-slate-800 mt-1.5">{{ status_counts.get(status_key, 0) }}</p>
+            <p class="text-[10px] text-slate-500 font-medium uppercase tracking-wider">{{ _(label) }}</p>
         </div>
         {% endfor %}
     </div>
 
     <!-- Applications List -->
     {% if applications %}
-    <div class="space-y-3">
+    <div class="space-y-2.5">
         {% for app in applications %}
-        <div class="bg-white rounded-xl border border-gray-100 hover:border-purple-200 transition p-4">
-            <div class="flex flex-col md:flex-row items-start md:items-center gap-4">
-                <!-- Grade Badge -->
-                <div class="flex items-center gap-3 shrink-0">
+        <div class="bg-white rounded-xl border border-slate-200/80 hover:border-primary-200 transition-all duration-200 p-4 sm:p-5 group animate-fade-in-up" style="animation-delay: {{ loop.index0 * 0.03 }}s;">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4">
+                <!-- Grade indicator -->
+                <div class="shrink-0 hidden sm:block">
                     {% if app.match_grade %}
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm
-                        {% if app.match_grade == 'A' %}bg-green-100 text-green-700
-                        {% elif app.match_grade == 'B' %}bg-blue-100 text-blue-700
-                        {% elif app.match_grade == 'C' %}bg-yellow-100 text-yellow-700
-                        {% elif app.match_grade == 'D' %}bg-orange-100 text-orange-700
-                        {% else %}bg-gray-100 text-gray-700{% endif %}">
+                    <div class="w-11 h-11 rounded-xl flex items-center justify-center font-bold text-sm shadow-sm
+                        {% if app.match_grade == 'A' %}bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-700 border border-emerald-200
+                        {% elif app.match_grade == 'B' %}bg-gradient-to-br from-blue-50 to-blue-100 text-blue-700 border border-blue-200
+                        {% elif app.match_grade == 'C' %}bg-gradient-to-br from-amber-50 to-amber-100 text-amber-700 border border-amber-200
+                        {% elif app.match_grade == 'D' %}bg-gradient-to-br from-orange-50 to-orange-100 text-orange-700 border border-orange-200
+                        {% else %}bg-gradient-to-br from-slate-50 to-slate-100 text-slate-600 border border-slate-200{% endif %}">
                         {{ app.match_grade }}
                     </div>
                     {% else %}
-                    <div class="w-10 h-10 rounded-full flex items-center justify-center bg-gray-50">
-                        <i class="fas fa-briefcase text-gray-400"></i>
+                    <div class="w-11 h-11 rounded-xl flex items-center justify-center bg-slate-50 border border-slate-100">
+                        <i class="fas fa-briefcase text-slate-300"></i>
                     </div>
                     {% endif %}
                 </div>
@@ -73,78 +75,83 @@
                 <!-- Job Info -->
                 <div class="flex-1 min-w-0">
                     <div class="flex items-center gap-2 flex-wrap">
-                        <h3 class="font-bold text-gray-800 text-sm truncate">{{ app.job_title }}</h3>
+                        <h3 class="font-bold text-slate-800 text-sm sm:text-base truncate group-hover:text-primary-600 transition-colors">{{ app.job_title }}</h3>
                         {% if app.match_score %}
-                        <span class="text-xs px-1.5 py-0.5 rounded bg-purple-50 text-purple-600">{{ app.match_score }}%</span>
+                        <span class="badge bg-primary-50 text-primary-600 border border-primary-100 text-[10px]">{{ app.match_score }}%</span>
                         {% endif %}
                     </div>
-                    <div class="flex items-center gap-3 text-xs text-gray-500 mt-1 flex-wrap">
-                        <span><i class="fas fa-building mr-1"></i>{{ app.company }}</span>
+                    <div class="flex items-center gap-x-3 gap-y-1 text-xs text-slate-500 mt-1.5 flex-wrap">
+                        <span class="flex items-center gap-1 font-medium text-slate-600"><i class="fas fa-building text-slate-300"></i>{{ app.company }}</span>
                         {% if app.location %}
-                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ app.location }}</span>
+                        <span class="flex items-center gap-1"><i class="fas fa-map-marker-alt text-slate-300"></i>{{ app.location }}</span>
                         {% endif %}
                         {% if app.platform %}
-                        <span><i class="fas fa-globe mr-1"></i>{{ app.platform }}</span>
+                        <span class="flex items-center gap-1 text-slate-400"><i class="fas fa-external-link-alt text-[10px]"></i>{{ app.platform }}</span>
                         {% endif %}
                         {% if app.salary_range %}
-                        <span class="text-green-600"><i class="fas fa-money-bill-wave mr-1"></i>{{ app.salary_range }}</span>
+                        <span class="flex items-center gap-1 text-emerald-600 font-medium"><i class="fas fa-money-bill-wave text-[10px]"></i>{{ app.salary_range }}</span>
                         {% endif %}
                     </div>
                 </div>
 
                 <!-- Status + Actions -->
-                <div class="flex items-center gap-2 shrink-0">
+                <div class="flex items-center gap-2 shrink-0 w-full sm:w-auto">
                     <!-- Status Selector -->
-                    <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="inline">
+                    <form method="POST" action="{{ url_for('update_application_status', app_id=app.id) }}" class="flex-1 sm:flex-none">
                         <select name="status" onchange="this.form.submit()"
-                                class="text-xs border rounded-lg px-2 py-1.5 
-                                {% if app.status == 'offer' or app.status == 'accepted' %}border-green-300 bg-green-50
-                                {% elif app.status == 'interviewing' %}border-yellow-300 bg-yellow-50
-                                {% elif app.status == 'rejected' %}border-red-300 bg-red-50
-                                {% elif app.status == 'contacted' %}border-purple-300 bg-purple-50
-                                {% elif app.status == 'applied' %}border-blue-300 bg-blue-50
-                                {% else %}border-gray-200{% endif %}">
-                            <option value="saved" {{ 'selected' if app.status == 'saved' }}>Guardado</option>
-                            <option value="applied" {{ 'selected' if app.status == 'applied' }}>Aplicado</option>
-                            <option value="contacted" {{ 'selected' if app.status == 'contacted' }}>Contactado</option>
-                            <option value="interviewing" {{ 'selected' if app.status == 'interviewing' }}>Entrevista</option>
-                            <option value="offer" {{ 'selected' if app.status == 'offer' }}>Oferta</option>
-                            <option value="accepted" {{ 'selected' if app.status == 'accepted' }}>Aceptado</option>
-                            <option value="rejected" {{ 'selected' if app.status == 'rejected' }}>Rechazado</option>
+                                class="w-full sm:w-auto text-xs font-medium border rounded-lg px-3 py-2 cursor-pointer transition-colors
+                                {% if app.status == 'offer' or app.status == 'accepted' %}border-emerald-200 bg-emerald-50 text-emerald-700
+                                {% elif app.status == 'interviewing' %}border-amber-200 bg-amber-50 text-amber-700
+                                {% elif app.status == 'rejected' %}border-red-200 bg-red-50 text-red-700
+                                {% elif app.status == 'contacted' %}border-violet-200 bg-violet-50 text-violet-700
+                                {% elif app.status == 'applied' %}border-blue-200 bg-blue-50 text-blue-700
+                                {% else %}border-slate-200 bg-slate-50 text-slate-700{% endif %}">
+                            <option value="saved" {{ 'selected' if app.status == 'saved' }}>📌 Guardado</option>
+                            <option value="applied" {{ 'selected' if app.status == 'applied' }}>✈️ Aplicado</option>
+                            <option value="contacted" {{ 'selected' if app.status == 'contacted' }}>💬 Contactado</option>
+                            <option value="interviewing" {{ 'selected' if app.status == 'interviewing' }}>🎯 Entrevista</option>
+                            <option value="offer" {{ 'selected' if app.status == 'offer' }}>🏆 Oferta</option>
+                            <option value="accepted" {{ 'selected' if app.status == 'accepted' }}>✅ Aceptado</option>
+                            <option value="rejected" {{ 'selected' if app.status == 'rejected' }}>❌ Rechazado</option>
                         </select>
                     </form>
 
                     {% if app.job_url %}
                     <a href="{{ app.job_url }}" target="_blank" rel="noopener"
-                       class="text-xs bg-purple-50 text-purple-600 px-2 py-1.5 rounded-lg hover:bg-purple-100 transition">
-                        <i class="fas fa-external-link-alt"></i>
+                       class="w-8 h-8 rounded-lg bg-primary-50 border border-primary-100 flex items-center justify-center text-primary-500 hover:bg-primary-100 transition shrink-0"
+                       title="{{ _('Ver oferta') }}">
+                        <i class="fas fa-external-link-alt text-xs"></i>
                     </a>
                     {% endif %}
 
                     <form method="POST" action="{{ url_for('delete_application', app_id=app.id) }}" class="inline"
                           onsubmit="return confirm('{{ _('¿Eliminar este trabajo de tu pipeline?') }}')">
-                        <button type="submit" class="text-xs text-red-400 hover:text-red-600 p-1.5">
-                            <i class="fas fa-trash"></i>
+                        <button type="submit" class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-300 hover:text-red-500 hover:bg-red-50 transition shrink-0"
+                                title="{{ _('Eliminar') }}">
+                            <i class="fas fa-trash text-xs"></i>
                         </button>
                     </form>
                 </div>
             </div>
 
             {% if app.notes %}
-            <div class="mt-2 ml-13 text-xs text-gray-500 bg-gray-50 rounded p-2">
-                <i class="fas fa-sticky-note mr-1"></i>{{ app.notes }}
+            <div class="mt-3 sm:ml-15 text-xs text-slate-500 bg-slate-50 rounded-lg p-3 border border-slate-100">
+                <i class="fas fa-sticky-note text-slate-300 mr-1"></i>{{ app.notes }}
             </div>
             {% endif %}
         </div>
         {% endfor %}
     </div>
     {% else %}
-    <div class="text-center py-16 bg-white rounded-xl border border-gray-100">
-        <i class="fas fa-stream text-5xl text-gray-300 mb-4"></i>
-        <h3 class="text-xl font-bold text-gray-700 mb-2">{{ _('Tu pipeline está vacío') }}</h3>
-        <p class="text-gray-500 mb-6">{{ _('Busca trabajos y guárdalos aquí para hacer seguimiento.') }}</p>
+    <!-- Empty state -->
+    <div class="text-center py-20 bg-white rounded-2xl border border-slate-200/80 animate-fade-in">
+        <div class="w-20 h-20 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl flex items-center justify-center mx-auto mb-5">
+            <i class="fas fa-stream text-3xl text-primary-300"></i>
+        </div>
+        <h3 class="text-xl font-bold text-slate-800 mb-2">{{ _('Tu pipeline está vacío') }}</h3>
+        <p class="text-slate-500 text-sm mb-6 max-w-sm mx-auto leading-relaxed">{{ _('Busca trabajos y guárdalos aquí para hacer seguimiento de tu proceso.') }}</p>
         <a href="{{ url_for('index') }}" class="button-primary">
-            <i class="fas fa-search mr-2"></i>{{ _('Buscar Trabajos') }}
+            <i class="fas fa-search text-xs"></i>{{ _('Buscar Trabajos') }}
         </a>
     </div>
     {% endif %}
