@@ -2,49 +2,47 @@
 {% set title = _('Ofertas Laborales') %}
 
 {% block content %}
-<div class="max-w-6xl mx-auto py-8 px-4">
+<div class="max-w-6xl mx-auto">
     <h1 class="text-3xl font-bold text-primary mb-8 text-center">
         <i class="fas fa-list-alt mr-2"></i>{{ _('Ofertas Laborales') }}
     </h1>
 
-    <!-- Filtros -->
-    <div class="bg-white rounded-xl card-hover p-6 mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <input type="text" placeholder="{{ _('Buscar por palabra clave') }}" class="form-input p-3">
-            <select class="form-input p-3">
-                <option>{{ _('Todas las ubicaciones') }}</option>
-                <option>{{ _('Remoto') }}</option>
-                <option>{{ _('Presencial') }}</option>
-            </select>
-            <button class="primary-bg hover:bg-purple-700 text-white p-3 rounded-lg">
-                {{ _('Filtrar') }}
-            </button>
-        </div>
-    </div>
-
-    <!-- Listado de Trabajos -->
-    <div class="space-y-6">
+    {% if jobs %}
+    <div class="space-y-4">
         {% for job in jobs %}
         <div class="bg-white rounded-xl card-hover p-6">
-            <div class="flex items-start justify-between">
-                <div>
-                    <h2 class="text-2xl font-bold text-primary">{{ job.title }}</h2>
-                    <p class="text-gray-600 mt-2">
-                        <i class="fas fa-building mr-2"></i>{{ job.employer.full_name }}
-                    </p>
-                    <p class="text-gray-600">
-                        <i class="fas fa-map-marker-alt mr-2"></i>{{ job.location }}
+            <div class="flex flex-col md:flex-row items-start justify-between gap-4">
+                <div class="flex-1">
+                    <a href="{{ url_for('job_detail', job_id=job.id) }}" class="text-xl font-bold text-primary hover:underline">
+                        {{ job.title }}
+                    </a>
+                    <div class="mt-2 flex flex-wrap gap-3 text-sm text-gray-600">
+                        <span><i class="fas fa-building mr-1"></i>{{ job.company }}</span>
+                        <span><i class="fas fa-map-marker-alt mr-1"></i>{{ job.location }}</span>
+                        <span><i class="fas fa-briefcase mr-1"></i>{{ job.job_type or 'full-time' }}</span>
+                        {% if job.salary_range %}
+                        <span><i class="fas fa-money-bill-wave mr-1"></i>{{ job.salary_range }}</span>
+                        {% endif %}
+                    </div>
+                    <p class="text-gray-500 mt-2 text-sm">{{ job.description|truncate(200) }}</p>
+                    <p class="text-xs text-gray-400 mt-1">
+                        <i class="fas fa-clock mr-1"></i>{{ job.created_at.strftime('%d/%m/%Y') }}
                     </p>
                 </div>
-                <a href="{{ url_for('apply_job', job_id=job.id) }}" class="primary-bg hover:bg-purple-700 text-white px-6 py-2 rounded-lg flex items-center">
-                    <i class="fas fa-check-circle mr-2"></i>{{ _('Postularme') }}
+                <a href="{{ url_for('job_detail', job_id=job.id) }}" 
+                   class="primary-bg text-white px-6 py-2 rounded-lg flex items-center whitespace-nowrap">
+                    <i class="fas fa-eye mr-2"></i>{{ _('Ver Detalle') }}
                 </a>
-            </div>
-            <div class="mt-6 text-gray-700">
-                {{ job.description|safe }}
             </div>
         </div>
         {% endfor %}
     </div>
+    {% else %}
+    <div class="text-center py-12 bg-white rounded-xl">
+        <i class="fas fa-briefcase text-5xl text-gray-300 mb-4"></i>
+        <h3 class="text-xl font-bold text-gray-700 mb-2">{{ _('No hay ofertas disponibles') }}</h3>
+        <p class="text-gray-500">{{ _('Vuelve pronto, se publican nuevas ofertas regularmente.') }}</p>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
