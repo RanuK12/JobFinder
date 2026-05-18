@@ -1,0 +1,77 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+eggs/
+*.egg
+
+# Virtual Environment
+venv/
+env/
+.venv/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment Variables
+.env
+.env.local
+.env.production
+
+# Database
+instance/
+*.db
+*.sqlite
+*.sqlite3
+
+# Uploads (user-generated content)
+uploads/*.pdf
+uploads/*.docx
+static/profiles/*.jpg
+static/profiles/*.png
+static/profiles/*.jpeg
+!static/profiles/default-profile.jpg
+
+# Logs
+static/logs/*.log
+*.log
+
+# Cache
+scraper_cache.sqlite
+*.cache
+
+# OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Node (if using for frontend tooling)
+node_modules/
+package-lock.json
+
+# Byte-compiled / optimized
+*.pyc
+*.pyo
+*.pyd
+
+# Distribution
+*.tar.gz
+*.whl
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+
+# Debug files
+debug_*.html
