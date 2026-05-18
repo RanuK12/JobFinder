@@ -39,15 +39,25 @@
                         </button>
                         
                         <div x-show="open" x-cloak x-transition
-                             class="absolute right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-100 py-2 w-52 z-50">
+                             class="absolute right-0 mt-2 bg-white rounded-lg shadow-xl border border-gray-100 py-2 w-56 z-50">
+                            {% if current_user.username %}
+                            <a href="{{ url_for('public_profile', username=current_user.username) }}"
+                               class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 transition text-sm">
+                                <i class="fas fa-eye w-4"></i>{{ _('Ver perfil público') }}
+                            </a>
+                            {% endif %}
+                            <a href="{{ url_for('edit_profile') }}"
+                               class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 transition text-sm">
+                                <i class="fas fa-user-edit w-4"></i>{{ _('Editar perfil') }}
+                            </a>
                             <a href="{{ url_for('dashboard') }}" 
                                class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 transition text-sm">
-                                <i class="fas fa-user w-4"></i>{{ _('Mi Perfil') }}
+                                <i class="fas fa-chart-line w-4"></i>{{ _('Mi Dashboard') }}
                             </a>
                             {% if current_user.user_type == 'candidate' %}
                             <a href="{{ url_for('applications') }}" 
                                class="flex items-center gap-2 px-4 py-2 text-gray-700 hover:bg-purple-50 transition text-sm">
-                                <i class="fas fa-file-alt w-4"></i>{{ _('Postulaciones') }}
+                                <i class="fas fa-file-alt w-4"></i>{{ _('Mis postulaciones') }}
                             </a>
                             {% endif %}
                             {% if current_user.user_type == 'admin' %}
@@ -100,6 +110,14 @@
                     <i class="fas fa-shield-alt mr-2"></i>{{ _('Panel Admin') }}
                 </a>
                 {% endif %}
+                {% if current_user.username %}
+                <a href="{{ url_for('public_profile', username=current_user.username) }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
+                    <i class="fas fa-eye mr-2"></i>{{ _('Ver perfil público') }}
+                </a>
+                {% endif %}
+                <a href="{{ url_for('edit_profile') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
+                    <i class="fas fa-user-edit mr-2"></i>{{ _('Editar perfil') }}
+                </a>
                 <a href="{{ url_for('job_listings') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
                     <i class="fas fa-list mr-2"></i>{{ _('Ofertas') }}
                 </a>
@@ -107,7 +125,7 @@
                     <i class="fas fa-search mr-2"></i>{{ _('Buscar Trabajos') }}
                 </a>
                 <a href="{{ url_for('dashboard') }}" class="block py-2 px-2 text-gray-700 hover:bg-purple-50 rounded">
-                    <i class="fas fa-user mr-2"></i>{{ _('Mi Perfil') }}
+                    <i class="fas fa-chart-line mr-2"></i>{{ _('Mi Dashboard') }}
                 </a>
                 <a href="{{ url_for('logout') }}" class="block py-2 px-2 text-red-600 hover:bg-red-50 rounded">
                     <i class="fas fa-sign-out-alt mr-2"></i>{{ _('Cerrar Sesión') }}
