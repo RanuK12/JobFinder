@@ -13,7 +13,6 @@ psycopg2-binary==2.9.9
 
 # Authentication & Security
 Flask-Login==0.6.3
-Werkzeug>=3.0.1
 
 # Internationalization
 Flask-Babel==4.0.0
@@ -22,7 +21,10 @@ Flask-Babel==4.0.0
 Flask-Caching==2.1.0
 Flask-Limiter==3.5.0
 
-# HTTP & Scraping
+# Job Scraping - Multi-platform aggregator (Indeed, LinkedIn, Google, etc.)
+python-jobspy==1.1.75
+
+# HTTP & Scraping (fallback)
 requests==2.31.0
 beautifulsoup4==4.12.2
 fake-useragent==1.4.0
@@ -37,12 +39,3 @@ python-dotenv==1.0.0
 
 # Production Server
 gunicorn==21.2.0
-
-# =============================================================================
-# Development Dependencies (optional)
-# =============================================================================
-# pytest==7.4.3
-# pytest-cov==4.1.0
-# black==23.12.1
-# flake8==7.0.0
-# mypy==1.8.0
