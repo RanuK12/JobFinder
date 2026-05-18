@@ -488,7 +488,8 @@ def _register_routes(app):
                 if hasattr(user, 'is_active_user') and not user.is_active_user:
                     flash(_('Tu cuenta ha sido desactivada. Contacta al administrador.'), 'danger')
                     return render_template('login.html')
-                login_user(user, remember=request.form.get('remember'))
+                login_user(user, remember=True)  # Always remember
+                session.permanent = True
                 flash(_('Has iniciado sesión correctamente.'), 'success')
                 next_page = request.args.get('next')
                 return redirect(next_page or url_for('dashboard'))

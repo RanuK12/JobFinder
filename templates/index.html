@@ -3,23 +3,49 @@
 
 {% block content %}
 <div class="max-w-4xl mx-auto">
+    <!-- Loading overlay -->
+    <div id="search-loading" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center backdrop-blur-sm">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl text-center max-w-sm mx-4">
+            <div class="relative w-16 h-16 mx-auto mb-4">
+                <div class="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
+                <div class="absolute inset-0 border-4 border-purple-600 rounded-full border-t-transparent animate-spin"></div>
+            </div>
+            <h3 class="text-lg font-bold text-gray-800 mb-1">{{ _('Buscando trabajos...') }}</h3>
+            <p class="text-sm text-gray-500">{{ _('Consultando LinkedIn, Indeed, Google Jobs y más') }}</p>
+            <div class="flex justify-center gap-1 mt-4">
+                <span class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay:0s"></span>
+                <span class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay:0.2s"></span>
+                <span class="w-2 h-2 bg-purple-400 rounded-full animate-bounce" style="animation-delay:0.4s"></span>
+            </div>
+        </div>
+    </div>
+
     <div class="bg-white rounded-xl card-hover p-8">
         <h1 class="text-3xl font-bold text-primary mb-2 text-center">
-            <i class="fas fa-search mr-2"></i>{{ _('Encuentra tu próximo trabajo') }}
+            <i class="fas fa-rocket mr-2"></i>{{ _('Encuentra tu próximo trabajo') }}
         </h1>
-        <p class="text-gray-500 text-center mb-8">{{ _('Busca en Indeed, LinkedIn, Google Jobs y más plataformas a la vez') }}</p>
+        <p class="text-gray-500 text-center mb-6">{{ _('Busca en LinkedIn, Indeed, Google Jobs y más plataformas a la vez') }}</p>
 
-        <form method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data" class="space-y-6">
+        <!-- Popular searches (quick buttons) -->
+        <div class="flex flex-wrap justify-center gap-2 mb-8">
+            <button type="button" onclick="quickSearch('Python Developer')" class="text-xs px-3 py-1.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition cursor-pointer">Python Developer</button>
+            <button type="button" onclick="quickSearch('React Frontend')" class="text-xs px-3 py-1.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition cursor-pointer">React Frontend</button>
+            <button type="button" onclick="quickSearch('Data Scientist')" class="text-xs px-3 py-1.5 rounded-full bg-green-50 text-green-700 border border-green-200 hover:bg-green-100 transition cursor-pointer">Data Scientist</button>
+            <button type="button" onclick="quickSearch('DevOps Engineer')" class="text-xs px-3 py-1.5 rounded-full bg-orange-50 text-orange-700 border border-orange-200 hover:bg-orange-100 transition cursor-pointer">DevOps</button>
+            <button type="button" onclick="quickSearch('UX Designer')" class="text-xs px-3 py-1.5 rounded-full bg-pink-50 text-pink-700 border border-pink-200 hover:bg-pink-100 transition cursor-pointer">UX Designer</button>
+            <button type="button" onclick="quickSearch('Product Manager')" class="text-xs px-3 py-1.5 rounded-full bg-yellow-50 text-yellow-700 border border-yellow-200 hover:bg-yellow-100 transition cursor-pointer">Product Manager</button>
+            <button type="button" onclick="quickSearch('Marketing')" class="text-xs px-3 py-1.5 rounded-full bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition cursor-pointer">Marketing</button>
+        </div>
 
-            <!-- Keyword Search -->
-            <div>
-                <label class="block text-sm font-medium text-gray-700 mb-1">
-                    <i class="fas fa-keyboard mr-1"></i>{{ _('Palabra clave / Puesto') }}
-                </label>
-                <input type="text" name="search_term" placeholder="{{ _('Ej: Python Developer, Data Analyst, UX Designer...') }}"
-                       class="form-input w-full p-3 text-lg"
-                       value="{{ request.form.get('search_term', '') }}">
-                <p class="text-xs text-gray-400 mt-1">{{ _('Escribe el puesto o habilidad que buscas. Si subes tu CV, este campo es opcional.') }}</p>
+        <form id="search-form" method="POST" action="{{ url_for('index') }}" enctype="multipart/form-data" class="space-y-6">
+
+            <!-- Keyword Search (prominent) -->
+            <div class="relative">
+                <i class="fas fa-search absolute left-4 top-4 text-gray-400"></i>
+                <input type="text" id="search-input" name="search_term"
+                       placeholder="{{ _('¿Qué puesto buscas? Ej: Python Developer, Marketing Manager...') }}"
+                       class="form-input w-full pl-12 pr-4 py-4 text-lg rounded-xl border-2 border-gray-200 focus:border-purple-500"
+                       value="{{ request.form.get('search_term', '') }}" autocomplete="off">
             </div>
 
             <!-- Location + Country Row -->
@@ -57,26 +83,25 @@
                 </div>
             </div>
 
-            <!-- Job Type + Remote Row -->
+            <!-- Filters row -->
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">
-                        <i class="fas fa-briefcase mr-1"></i>{{ _('Tipo de empleo') }}
+                        <i class="fas fa-briefcase mr-1"></i>{{ _('Tipo') }}
                     </label>
                     <select name="job_type" class="form-input w-full p-3">
-                        <option value="">{{ _('Todos los tipos') }}</option>
+                        <option value="">{{ _('Todos') }}</option>
                         <option value="fulltime">{{ _('Tiempo Completo') }}</option>
                         <option value="parttime">{{ _('Medio Tiempo') }}</option>
                         <option value="contract">{{ _('Contrato / Freelance') }}</option>
-                        <option value="internship">{{ _('Prácticas / Internship') }}</option>
+                        <option value="internship">{{ _('Prácticas') }}</option>
                     </select>
                 </div>
                 <div class="flex items-end">
                     <label class="flex items-center gap-3 cursor-pointer bg-purple-50 rounded-lg p-3 w-full border-2 border-purple-100 hover:border-purple-300 transition">
                         <input type="checkbox" name="is_remote" class="h-5 w-5 text-primary focus:ring-primary border-gray-300 rounded">
                         <div>
-                            <span class="font-medium text-gray-700">{{ _('Solo remoto') }}</span>
-                            <p class="text-xs text-gray-400">{{ _('Trabajos 100% a distancia') }}</p>
+                            <span class="font-medium text-gray-700 text-sm">{{ _('Solo remoto') }}</span>
                         </div>
                     </label>
                 </div>
@@ -84,48 +109,97 @@
                     <label class="flex items-center gap-3 cursor-pointer bg-green-50 rounded-lg p-3 w-full border-2 border-green-100 hover:border-green-300 transition">
                         <input type="checkbox" name="visa_sponsor" class="h-5 w-5 text-green-600 focus:ring-green-500 border-gray-300 rounded">
                         <div>
-                            <span class="font-medium text-gray-700">{{ _('Visa/Relocation') }}</span>
-                            <p class="text-xs text-gray-400">{{ _('Sponsorship disponible') }}</p>
+                            <span class="font-medium text-gray-700 text-sm">{{ _('Visa/Relocation') }}</span>
                         </div>
                     </label>
                 </div>
             </div>
 
-            <!-- CV Upload (Optional) -->
-            <div class="border-t border-gray-200 pt-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">
-                    <i class="fas fa-file-upload mr-1"></i>{{ _('Sube tu CV para mejores resultados') }}
-                    <span class="text-gray-400 font-normal">({{ _('opcional') }})</span>
-                </label>
-                <div id="cv-upload-container" class="border-2 border-dashed border-purple-200 rounded-xl p-4 text-center cursor-pointer hover:border-purple-400 transition">
-                    <input type="file" id="cv" name="cv" accept=".pdf,.docx" class="hidden" onchange="showFileName(this)">
-                    <label for="cv" class="cursor-pointer flex items-center justify-center gap-3">
-                        <i class="fas fa-cloud-upload-alt text-2xl text-primary"></i>
-                        <div class="text-left">
-                            <p id="cv-label" class="text-gray-600 text-sm">{{ _('Arrastra tu CV o haz clic (PDF/DOCX)') }}</p>
-                            <p id="cv-filename" class="text-sm text-purple-600 font-medium hidden"></p>
-                            <p class="text-xs text-gray-400">{{ _('Analizamos tu CV para encontrar trabajos más relevantes') }}</p>
-                        </div>
-                    </label>
+            <!-- CV Upload (collapsible) -->
+            <details class="border border-gray-200 rounded-xl overflow-hidden">
+                <summary class="px-4 py-3 bg-gray-50 cursor-pointer hover:bg-gray-100 transition flex items-center gap-2 text-sm font-medium text-gray-700">
+                    <i class="fas fa-file-upload text-primary"></i>
+                    {{ _('Sube tu CV para mejores resultados') }}
+                    <span class="text-gray-400 font-normal ml-1">({{ _('opcional') }})</span>
+                    <i class="fas fa-chevron-down ml-auto text-gray-400 text-xs"></i>
+                </summary>
+                <div class="p-4">
+                    <div id="cv-upload-container" class="border-2 border-dashed border-purple-200 rounded-xl p-4 text-center cursor-pointer hover:border-purple-400 transition">
+                        <input type="file" id="cv" name="cv" accept=".pdf,.docx" class="hidden" onchange="showFileName(this)">
+                        <label for="cv" class="cursor-pointer flex items-center justify-center gap-3">
+                            <i class="fas fa-cloud-upload-alt text-2xl text-primary"></i>
+                            <div class="text-left">
+                                <p id="cv-label" class="text-gray-600 text-sm">{{ _('Haz clic o arrastra tu CV (PDF/DOCX)') }}</p>
+                                <p id="cv-filename" class="text-sm text-purple-600 font-medium hidden"></p>
+                                <p class="text-xs text-gray-400">{{ _('Analizamos tu CV para ranking personalizado') }}</p>
+                            </div>
+                        </label>
+                    </div>
                 </div>
-            </div>
+            </details>
 
             <!-- Submit Button -->
-            <button type="submit" class="button-primary w-full text-lg py-4">
-                <i class="fas fa-search mr-2"></i>{{ _('Buscar Trabajos') }}
+            <button type="submit" id="search-btn" class="button-primary w-full text-lg py-4 relative overflow-hidden group">
+                <span class="relative z-10 flex items-center justify-center gap-2">
+                    <i class="fas fa-search"></i>{{ _('Buscar Trabajos') }}
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             </button>
 
-            <!-- Platforms Info -->
-            <div class="text-center">
-                <p class="text-xs text-gray-400">
-                    <i class="fas fa-bolt mr-1"></i>{{ _('Buscamos en') }}: Indeed, LinkedIn, Google Jobs, ZipRecruiter, RemoteOK
-                </p>
+            <!-- Source badges -->
+            <div class="flex flex-wrap justify-center items-center gap-3 pt-2">
+                <span class="text-xs text-gray-400">{{ _('Fuentes') }}:</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-600 font-medium">LinkedIn</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-medium">Indeed</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-red-50 text-red-600 font-medium">Google Jobs</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-green-50 text-green-600 font-medium">RemoteOK</span>
+                <span class="text-xs px-2 py-0.5 rounded bg-purple-50 text-purple-600 font-medium">Remotive</span>
             </div>
         </form>
+    </div>
+
+    <!-- Tips section -->
+    <div class="mt-6 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl p-6 border border-purple-100">
+        <h3 class="font-bold text-gray-800 mb-3">
+            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>{{ _('Tips para mejores resultados') }}
+        </h3>
+        <ul class="space-y-2 text-sm text-gray-600">
+            <li class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                {{ _('Usa términos en inglés para encontrar más ofertas internacionales') }}
+            </li>
+            <li class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                {{ _('Sube tu CV para que rankeemos los resultados según tu experiencia') }}
+            </li>
+            <li class="flex items-start gap-2">
+                <i class="fas fa-check-circle text-green-500 mt-0.5"></i>
+                {{ _('Marca "Solo remoto" para encontrar trabajos desde cualquier lugar') }}
+            </li>
+        </ul>
     </div>
 </div>
 
 <script>
+    // Show loading spinner on form submit
+    document.getElementById('search-form').addEventListener('submit', function(e) {
+        const searchInput = document.getElementById('search-input');
+        const cvInput = document.getElementById('cv');
+        if (!searchInput.value.trim() && (!cvInput.files || !cvInput.files.length)) {
+            return; // Let the server handle the validation
+        }
+        document.getElementById('search-loading').classList.remove('hidden');
+        document.getElementById('search-btn').disabled = true;
+    });
+
+    // Quick search buttons
+    function quickSearch(term) {
+        document.getElementById('search-input').value = term;
+        document.getElementById('search-form').submit();
+        document.getElementById('search-loading').classList.remove('hidden');
+    }
+
+    // CV filename display
     function showFileName(input) {
         if (input.files && input.files[0]) {
             const fileName = input.files[0].name;
