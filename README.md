@@ -216,7 +216,7 @@ export DATABASE_URL=postgresql://user:pass@host/dbname
 
 ## License
 
-This project is licensed under the MIT License.
+MIT — © 2026 Ranuk IT Solutions | ranuk.dev
 
 ## Contact
 
