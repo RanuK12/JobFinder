@@ -26,6 +26,7 @@ ENV/
 .env
 .env.local
 .env.production
+.env.example
 
 # Database
 instance/
@@ -36,6 +37,7 @@ instance/
 # Uploads (user-generated content)
 uploads/*.pdf
 uploads/*.docx
+uploads/*.doc
 static/profiles/*.jpg
 static/profiles/*.png
 static/profiles/*.jpeg

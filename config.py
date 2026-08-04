@@ -38,6 +38,28 @@ class Config:
 
     # Session - keep users logged in
     PERMANENT_SESSION_LIFETIME = timedelta(days=30)
+    
+    # Email configuration
+    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
+    MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
+    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
+    MAIL_USERNAME = os.environ.get('MAIL_USERNAME', '')
+    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD', '')
+    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER', 'noreply@jobconnect.com')
+    
+    # File upload settings
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
+    UPLOAD_FOLDER = os.environ.get('UPLOAD_FOLDER', str(BASE_DIR / 'uploads'))
+    
+    # API settings
+    RATELIMIT_STORAGE_URL = os.environ.get('RATELIMIT_STORAGE_URL', f'sqlite:///{BASE_DIR / "instance" / "ratelimit.db"}')
+    
+    # Job listing settings
+    MAX_JOBS_PER_PAGE = 50
+    JOB_EXPIRATION_DAYS = 30
+    
+    # User settings
+    MAX_USERS_PER_PAGE = 50
     REMEMBER_COOKIE_DURATION = timedelta(days=365)
     REMEMBER_COOKIE_SECURE = False  # Set True in production with HTTPS
     REMEMBER_COOKIE_HTTPONLY = True
@@ -58,13 +80,19 @@ class Config:
         'UPLOAD_FOLDER', str(BASE_DIR / 'uploads')
     )
     MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size
-    ALLOWED_EXTENSIONS = {'pdf', 'docx'}
+    ALLOWED_EXTENSIONS = {'pdf', 'docx', 'doc'}
 
     # JobSpy settings (multi-platform job scraping)
     JOBSPY_SITES = ['indeed', 'linkedin', 'google', 'zip_recruiter']
     JOBSPY_COUNTRY = os.environ.get('JOBSPY_COUNTRY', 'USA')
     JOBSPY_RESULTS_WANTED = int(os.environ.get('JOBSPY_RESULTS_WANTED', 25))
     JOBSPY_HOURS_OLD = int(os.environ.get('JOBSPY_HOURS_OLD', 168))  # 7 days
+
+    # API Keys
+    INDEED_API_KEY = os.environ.get('INDEED_API_KEY', '')
+    LINKEDIN_CLIENT_ID = os.environ.get('LINKEDIN_CLIENT_ID', '')
+    LINKEDIN_CLIENT_SECRET = os.environ.get('LINKEDIN_CLIENT_SECRET', '')
+    GOOGLE_JOBS_API_KEY = os.environ.get('GOOGLE_JOBS_API_KEY', '')
 
     # Scraping settings (fallback)
     SCRAPING_TIMEOUT = int(os.environ.get('SCRAPING_TIMEOUT', 30))
