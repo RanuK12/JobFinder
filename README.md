@@ -6,7 +6,7 @@
 
 JobConnect is a web application that connects job seekers with remote opportunities. The platform analyzes your CV using natural language processing, extracts relevant skills and keywords, then searches multiple job platforms to find the best matches ranked by relevance.
 
-**Live Demo:** [Deployed on Railway 🚂](https://your-app-name.up.railway.app) (Update link when deployed)
+**Live Demo:** [Deployed on Render](https://jobfinder-demo.onrender.com) (Update link when deployed)
 
 ### Key Features
 
