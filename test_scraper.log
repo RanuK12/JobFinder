@@ -1,0 +1,18 @@
+2026-08-03 01:23:43,820 - root - ERROR - Error during testing: type object 'DevelopmentConfig' has no attribute 'config'
+Traceback (most recent call last):
+  File "/Users/emilioranucoli/Desktop/Oficina_Ranuk/JobFinder/test_scraper.py", line 32, in test_scraper
+    scraper = JobScraper(DevelopmentConfig)
+  File "/Users/emilioranucoli/Desktop/Oficina_Ranuk/JobFinder/scraper.py", line 39, in __init__
+    self.config = app.config if app else {}
+                  ^^^^^^^^^^
+AttributeError: type object 'DevelopmentConfig' has no attribute 'config'
+2026-08-03 01:24:39,918 - JobScraper - INFO - Search: term='python developer' location='' remote=False country='None'
+2026-08-03 01:24:40,354 - JobScraper - INFO - Remotive: 4 jobs
+2026-08-03 01:24:40,541 - JobScraper - INFO - Arbeitnow: 30 jobs
+2026-08-03 01:24:41,240 - JobScraper - INFO - RemoteOK: 30 jobs
+2026-08-03 01:24:41,242 - JobScraper - INFO - Total: 30 unique jobs returned
+2026-08-03 01:28:18,026 - JobScraper - INFO - Search: term='python developer' location='' remote=False country='None'
+2026-08-03 01:28:18,249 - JobScraper - INFO - Remotive: 4 jobs
+2026-08-03 01:28:18,448 - JobScraper - INFO - Arbeitnow: 30 jobs
+2026-08-03 01:28:19,299 - JobScraper - INFO - RemoteOK: 30 jobs
+2026-08-03 01:28:19,301 - JobScraper - INFO - Total: 30 unique jobs returned
