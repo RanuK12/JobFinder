@@ -78,3 +78,5 @@ htmlcov/
 # Debug files
 debug_*.html
 .aider*
+.env
+.env
