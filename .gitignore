@@ -81,3 +81,8 @@ debug_*.html
 .env
 .env
 .env
+.env*
+!.env.example
+*.bak
+*.backup
+*.bak.*
